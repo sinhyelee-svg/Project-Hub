@@ -1,0 +1,6 @@
+{
+  "name": "Campaign Video Timeline Dashboard",
+  "description": "A highly visual and interactive timeline and schedule manager for campaign video production.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
