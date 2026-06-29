@@ -134,7 +134,7 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
               <th className="py-3 px-4 min-w-[220px]">영상명</th>
               <th className="py-3 px-4 w-[160px]">상태</th>
               <th className="py-3 px-4 min-w-[200px]">진행률</th>
-              <th className="py-3 px-4 min-w-[220px]">비고 (비고/특이사항)</th>
+              <th className="py-3 px-4 min-w-[220px]">비고</th>
               <th className="py-3 px-4 w-16 text-center">삭제</th>
             </tr>
           </thead>
@@ -232,24 +232,26 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
                           step="5"
                           value={video.progress}
                           onChange={(e) => onUpdateVideoField(video.id, 'progress', Number(e.target.value))}
-                          className="flex-1 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-hidden"
+                          className="flex-1 h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-hidden"
+                          style={{
+                            background: `linear-gradient(to right, ${
+                              video.status === '완료'
+                                ? '#10b981' // emerald-500
+                                : video.status === '지연'
+                                ? '#f43f5e' // rose-500
+                                : '#4f46e5' // indigo-600
+                            } 0%, ${
+                              video.status === '완료'
+                                ? '#10b981'
+                                : video.status === '지연'
+                                ? '#f43f5e'
+                                : '#4f46e5'
+                            } ${video.progress}%, #e2e8f0 ${video.progress}%, #e2e8f0 100%)`
+                          }}
                         />
                         <span className="w-10 text-right font-bold text-slate-700 tabular-nums">
                           {video.progress}%
                         </span>
-                      </div>
-                      {/* Mini progress background bar */}
-                      <div className="w-full h-1 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-300 ${
-                            video.status === '완료'
-                              ? 'bg-emerald-500'
-                              : video.status === '지연'
-                              ? 'bg-rose-500'
-                              : 'bg-indigo-500'
-                          }`}
-                          style={{ width: `${video.progress}%` }}
-                        />
                       </div>
                     </td>
 

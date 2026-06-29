@@ -94,10 +94,10 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ videos }) => {
         </motion.div>
       </div>
 
-      {/* 8-Stage Unified Pipeline Row */}
+      {/* Unified Pipeline Row */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5" id="pipeline-container">
         <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-          <span>워크플로우 진행 단계 (8단계 파이프라인)</span>
+          <span>워크플로우 진행 단계</span>
         </h3>
         
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3" id="pipeline-steps-grid">
@@ -113,20 +113,17 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ videos }) => {
                 initial="hidden"
                 animate="visible"
                 variants={cardVariants}
-                className={`relative rounded-lg p-3 border transition-all duration-200 ${meta.bg} ${meta.border} flex flex-col justify-between`}
+                className={`relative rounded-lg p-3 border transition-all duration-200 ${meta.bg} ${meta.border} flex items-center justify-between`}
                 id={`pipeline-step-${stage.status}`}
               >
-                <div>
-                  <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1 truncate">
-                      <span>{meta.emoji}</span>
-                      <span>{stage.label}</span>
-                    </span>
-                    <span className={`text-[10px] px-1 py-0.2 rounded font-black shrink-0 ${meta.color} bg-white/70 shadow-2xs`}>
-                      {count}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-500/90 font-medium truncate">{stage.desc}</p>
+                <div className="flex items-center justify-between gap-1.5 w-full">
+                  <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1 truncate">
+                    <span>{meta.emoji}</span>
+                    <span>{stage.label}</span>
+                  </span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-black shrink-0 ${meta.color} bg-white/70 shadow-2xs`}>
+                    {count}
+                  </span>
                 </div>
 
                 {/* Connective Flow Arrows for Desktop screens */}

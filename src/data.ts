@@ -172,7 +172,7 @@ export const PHASE_META: Record<
     color: 'text-blue-700',
     bg: 'bg-blue-50',
     border: 'border-blue-200',
-    emoji: '🎨',
+    emoji: '🎞️',
   },
   '1차 피드백': {
     label: '1차 피드백',
@@ -200,14 +200,14 @@ export const PHASE_META: Record<
     color: 'text-amber-700',
     bg: 'bg-amber-50',
     border: 'border-amber-200',
-    emoji: '🚀',
+    emoji: '🧸',
   },
   '완료': {
     label: '완료',
     color: 'text-emerald-700',
     bg: 'bg-emerald-50',
     border: 'border-emerald-200',
-    emoji: '✅',
+    emoji: '🧡',
   },
   '지연': {
     label: '지연',

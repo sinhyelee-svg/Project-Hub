@@ -12,12 +12,12 @@ interface KanbanBoardProps {
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos, onUpdateVideoStatus }) => {
   const columns: { status: VideoStatus; title: string; meta: any }[] = [
     { status: '대기', title: '🤍 대기', meta: STATUS_META['대기'] },
-    { status: '가편 편집', title: '🎨 가편 편집', meta: STATUS_META['가편 편집'] },
+    { status: '가편 편집', title: '🎞️ 가편 편집', meta: STATUS_META['가편 편집'] },
     { status: '1차 피드백', title: '💬 1차 피드백', meta: STATUS_META['1차 피드백'] },
     { status: '종편 편집', title: '🎬 종편 편집', meta: STATUS_META['종편 편집'] },
     { status: '최종 피드백', title: '📝 최종 피드백', meta: STATUS_META['최종 피드백'] },
-    { status: '마스터 전달', title: '🚀 마스터 전달', meta: STATUS_META['마스터 전달'] },
-    { status: '완료', title: '✅ 완료', meta: STATUS_META['완료'] },
+    { status: '마스터 전달', title: '🧸 마스터 전달', meta: STATUS_META['마스터 전달'] },
+    { status: '완료', title: '🧡 완료', meta: STATUS_META['완료'] },
     { status: '지연', title: '⚠️ 지연', meta: STATUS_META['지연'] },
   ];
 

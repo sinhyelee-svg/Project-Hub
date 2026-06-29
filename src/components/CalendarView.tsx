@@ -122,6 +122,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
             const isSelected = selectedDay === day;
             const daySchedules = getSchedulesForDate(day);
             const isWeekend = (day + offset - 1) % 7 === 0 || (day + offset - 1) % 7 === 6;
+            const holidayName =
+              currentMonth === 7 && day === 17
+                ? '제헌절'
+                : currentMonth === 9 && (day === 24 || day === 25 || day === 26)
+                ? '추석 연휴'
+                : null;
+            const isHoliday = !!holidayName;
+            const isSunday = (day + offset - 1) % 7 === 0;
+            const isSaturday = (day + offset - 1) % 7 === 6;
 
             return (
               <button
@@ -130,6 +139,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
                 className={`relative min-h-[110px] rounded-xl border p-2 flex flex-col justify-start items-stretch text-left transition-all ${
                   isSelected
                     ? 'border-indigo-600 bg-indigo-50/30 shadow-2xs ring-2 ring-indigo-600/10'
+                    : isHoliday || isSunday
+                    ? 'border-rose-100 bg-rose-50/5 hover:bg-rose-50/20 hover:border-rose-300'
                     : 'border-slate-100 bg-white hover:bg-slate-50 hover:border-slate-300'
                 }`}
               >
@@ -138,14 +149,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
                   className={`text-xs font-bold mb-1.5 ${
                     isSelected
                       ? 'text-indigo-700 font-extrabold'
-                      : isWeekend
-                      ? (day + offset - 1) % 7 === 0
-                        ? 'text-rose-500'
-                        : 'text-indigo-500'
+                      : isSunday || isHoliday
+                      ? 'text-rose-500'
+                      : isSaturday
+                      ? 'text-indigo-500'
                       : 'text-slate-700'
                   }`}
                 >
-                  {day}
+                  {day} {isHoliday && <span className="text-[9px] font-normal text-rose-400 select-none ml-1">{holidayName}</span>}
                 </span>
 
                 {/* Direct Detail Schedules */}

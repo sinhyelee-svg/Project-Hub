@@ -4,6 +4,29 @@ import { DATE_LIST, PHASE_META, STATUS_META } from '../data';
 import { Palette, Trash2, CalendarRange, MousePointerClick, ChevronRight, Check } from 'lucide-react';
 import { motion } from 'motion/react';
 
+// Helper to identify Sunday/Saturdays or Korean Holidays
+const isRedDay = (dateStr: string): boolean => {
+  const [mStr, dStr] = dateStr.split('/');
+  const month = parseInt(mStr);
+  const dayNum = parseInt(dStr);
+  
+  // Specific requested holidays
+  if (month === 7 && dayNum === 17) return true;
+  if (month === 9 && (dayNum === 24 || dayNum === 25 || dayNum === 26)) return true;
+  
+  // Weekends
+  if (month === 7) {
+    return (dayNum + 2) % 7 === 6 || (dayNum + 2) % 7 === 0; // July 1 is Wed
+  }
+  if (month === 8) {
+    return (dayNum + 5) % 7 === 6 || (dayNum + 5) % 7 === 0; // Aug 1 is Sat
+  }
+  if (month === 9) {
+    return (dayNum + 1) % 7 === 6 || (dayNum + 1) % 7 === 0; // Sep 1 is Tue
+  }
+  return false;
+};
+
 interface GanttTimelineProps {
   videos: VideoItem[];
   onUpdateSchedule: (videoId: string, date: string, phase: SchedulePhase) => void;
@@ -270,12 +293,12 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
               {Array.from({ length: 31 }).map((_, d) => {
                 const dayNum = d + 1;
                 const dayStr = `${dayNum}`;
-                const isWeekend = (dayNum + 2) % 7 === 6 || (dayNum + 2) % 7 === 0; // July 1 is Wed
+                const isHolidayOrWeekend = isRedDay(`7/${dayNum}`);
                 return (
                   <th
                     key={`july-${dayStr}`}
                     className={`text-center text-[10px] font-semibold w-7 min-w-7 py-2 border-r border-slate-100 ${
-                      isWeekend ? 'bg-rose-50/40 text-rose-500' : 'text-slate-500'
+                      isHolidayOrWeekend ? 'bg-rose-50/40 text-rose-500' : 'text-slate-500'
                     }`}
                   >
                     {dayStr}
@@ -287,12 +310,12 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
               {Array.from({ length: 31 }).map((_, d) => {
                 const dayNum = d + 1;
                 const dayStr = `${dayNum}`;
-                const isWeekend = (dayNum + 5) % 7 === 6 || (dayNum + 5) % 7 === 0; // Aug 1 is Sat
+                const isHolidayOrWeekend = isRedDay(`8/${dayNum}`);
                 return (
                   <th
                     key={`august-${dayStr}`}
                     className={`text-center text-[10px] font-semibold w-7 min-w-7 py-2 border-r border-slate-100 ${
-                      isWeekend ? 'bg-rose-50/40 text-rose-500' : 'text-slate-500'
+                      isHolidayOrWeekend ? 'bg-rose-50/40 text-rose-500' : 'text-slate-500'
                     }`}
                   >
                     {dayStr}
@@ -304,12 +327,12 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
               {Array.from({ length: 30 }).map((_, d) => {
                 const dayNum = d + 1;
                 const dayStr = `${dayNum}`;
-                const isWeekend = (dayNum + 1) % 7 === 6 || (dayNum + 1) % 7 === 0; // Sep 1 is Tue
+                const isHolidayOrWeekend = isRedDay(`9/${dayNum}`);
                 return (
                   <th
                     key={`september-${dayStr}`}
                     className={`text-center text-[10px] font-semibold w-7 min-w-7 py-2 border-r border-slate-100 ${
-                      isWeekend ? 'bg-rose-50/40 text-rose-500' : 'text-slate-500'
+                      isHolidayOrWeekend ? 'bg-rose-50/40 text-rose-500' : 'text-slate-500'
                     }`}
                   >
                     {dayStr}
@@ -370,7 +393,7 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
                       onMouseEnter={() => handleMouseEnter(video.id, date)}
                       className={`relative text-center border-r border-slate-100 p-0 h-10 transition-all select-none hover:opacity-85 overflow-visible ${
                         phase !== '' ? (isConnectedLeft ? 'z-10' : 'z-[15]') : 'z-0'
-                      } ${meta ? meta.bg : 'bg-transparent'}`}
+                      } ${meta ? meta.bg : (isRedDay(date) ? 'bg-rose-50/15' : 'bg-transparent')}`}
                       title={`${video.name} - ${date}: ${phase || '지정 없음'}`}
                     >
                       {/* Interactive block overlay */}
