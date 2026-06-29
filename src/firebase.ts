@@ -78,20 +78,28 @@ export const subscribeToVideos = (
   initialVideosFallback: VideoItem[]
 ) => {
   const colRef = collection(db, COLLECTION_NAME);
+  let isFirstLoad = true;
   
   return onSnapshot(colRef, async (snapshot) => {
     try {
       if (snapshot.empty) {
-        // If Firestore database is brand new and empty, seed it with initial fallback data
-        console.log('Firestore is empty. Seeding database with initial videos...');
-        const batch = writeBatch(db);
-        initialVideosFallback.forEach((video) => {
-          const docRef = doc(db, COLLECTION_NAME, video.id);
-          batch.set(docRef, video);
-        });
-        await batch.commit();
-        // The onSnapshot will automatically trigger again when the batch writes complete.
+        if (isFirstLoad) {
+          isFirstLoad = false;
+          // If Firestore database is brand new and empty, seed it with initial fallback data
+          console.log('Firestore is empty. Seeding database with initial videos...');
+          const batch = writeBatch(db);
+          initialVideosFallback.forEach((video) => {
+            const docRef = doc(db, COLLECTION_NAME, video.id);
+            batch.set(docRef, video);
+          });
+          await batch.commit();
+          // The onSnapshot will automatically trigger again when the batch writes complete.
+        } else {
+          // If the list is intentionally cleared, do not auto-seed, just pass an empty list
+          onUpdate([]);
+        }
       } else {
+        isFirstLoad = false;
         const videosList: VideoItem[] = [];
         snapshot.forEach((doc) => {
           videosList.push(doc.data() as VideoItem);
@@ -147,22 +155,24 @@ export const deleteVideoFromFirestore = async (videoId: string) => {
 // Batch delete and re-set all videos (useful for reset or full imports)
 export const resetVideosInFirestore = async (newVideos: VideoItem[]) => {
   try {
-    // 1. Get all current docs and delete them
     const colRef = collection(db, COLLECTION_NAME);
     const querySnapshot = await getDocs(colRef);
-    const deleteBatch = writeBatch(db);
+    
+    // Perform all deletions and additions in a single atomic batch
+    const batch = writeBatch(db);
+    
+    // 1. Delete all current docs
     querySnapshot.forEach((doc) => {
-      deleteBatch.delete(doc.ref);
+      batch.delete(doc.ref);
     });
-    await deleteBatch.commit();
-
+    
     // 2. Set new videos
-    const writeBatchInstance = writeBatch(db);
     newVideos.forEach((video) => {
       const docRef = doc(db, COLLECTION_NAME, video.id);
-      writeBatchInstance.set(docRef, video);
+      batch.set(docRef, video);
     });
-    await writeBatchInstance.commit();
+    
+    await batch.commit();
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, COLLECTION_NAME);
   }
