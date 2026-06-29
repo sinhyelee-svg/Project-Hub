@@ -27,6 +27,51 @@ export const db = getFirestore(app, "ai-studio-campaignvideotim-dddca6fe-5c6a-49
 
 const COLLECTION_NAME = 'videos';
 
+// Error reporting for automated rules adjustment and diagnostics
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: null,
+      email: null,
+      emailVerified: null,
+      isAnonymous: null,
+      tenantId: null,
+      providerInfo: []
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
 // Sync listener for real-time updates
 export const subscribeToVideos = (
   onUpdate: (videos: VideoItem[]) => void,
@@ -35,37 +80,42 @@ export const subscribeToVideos = (
   const colRef = collection(db, COLLECTION_NAME);
   
   return onSnapshot(colRef, async (snapshot) => {
-    if (snapshot.empty) {
-      // If Firestore database is brand new and empty, seed it with initial fallback data
-      console.log('Firestore is empty. Seeding database with initial videos...');
-      const batch = writeBatch(db);
-      initialVideosFallback.forEach((video) => {
-        const docRef = doc(db, COLLECTION_NAME, video.id);
-        batch.set(docRef, video);
-      });
-      await batch.commit();
-      // The onSnapshot will automatically trigger again when the batch writes complete.
-    } else {
-      const videosList: VideoItem[] = [];
-      snapshot.forEach((doc) => {
-        videosList.push(doc.data() as VideoItem);
-      });
-      // Sort by 'no' to keep the correct spreadsheet-like order
-      videosList.sort((a, b) => a.no - b.no);
-      onUpdate(videosList);
+    try {
+      if (snapshot.empty) {
+        // If Firestore database is brand new and empty, seed it with initial fallback data
+        console.log('Firestore is empty. Seeding database with initial videos...');
+        const batch = writeBatch(db);
+        initialVideosFallback.forEach((video) => {
+          const docRef = doc(db, COLLECTION_NAME, video.id);
+          batch.set(docRef, video);
+        });
+        await batch.commit();
+        // The onSnapshot will automatically trigger again when the batch writes complete.
+      } else {
+        const videosList: VideoItem[] = [];
+        snapshot.forEach((doc) => {
+          videosList.push(doc.data() as VideoItem);
+        });
+        // Sort by 'no' to keep the correct spreadsheet-like order
+        videosList.sort((a, b) => a.no - b.no);
+        onUpdate(videosList);
+      }
+    } catch (innerError) {
+      handleFirestoreError(innerError, OperationType.WRITE, COLLECTION_NAME);
     }
   }, (error) => {
-    console.error('Error listening to Firestore updates: ', error);
+    handleFirestoreError(error, OperationType.GET, COLLECTION_NAME);
   });
 };
 
 // Create or update a single video
 export const saveVideoToFirestore = async (video: VideoItem) => {
+  const path = `${COLLECTION_NAME}/${video.id}`;
   try {
     const docRef = doc(db, COLLECTION_NAME, video.id);
     await setDoc(docRef, video);
   } catch (error) {
-    console.error('Error saving video to Firestore:', error);
+    handleFirestoreError(error, OperationType.WRITE, path);
   }
 };
 
@@ -79,17 +129,18 @@ export const saveVideosToFirestoreBatch = async (videos: VideoItem[]) => {
     });
     await batch.commit();
   } catch (error) {
-    console.error('Error batch saving videos to Firestore:', error);
+    handleFirestoreError(error, OperationType.WRITE, COLLECTION_NAME);
   }
 };
 
 // Delete a single video
 export const deleteVideoFromFirestore = async (videoId: string) => {
+  const path = `${COLLECTION_NAME}/${videoId}`;
   try {
     const docRef = doc(db, COLLECTION_NAME, videoId);
     await deleteDoc(docRef);
   } catch (error) {
-    console.error('Error deleting video from Firestore:', error);
+    handleFirestoreError(error, OperationType.DELETE, path);
   }
 };
 
@@ -113,6 +164,6 @@ export const resetVideosInFirestore = async (newVideos: VideoItem[]) => {
     });
     await writeBatchInstance.commit();
   } catch (error) {
-    console.error('Error resetting Firestore videos:', error);
+    handleFirestoreError(error, OperationType.WRITE, COLLECTION_NAME);
   }
 };

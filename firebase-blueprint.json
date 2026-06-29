@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "VideoItem": {
+      "title": "VideoItem",
+      "description": "A single campaign video scheduling item",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the video"
+        },
+        "no": {
+          "type": "number",
+          "description": "Sequential row number in list"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the video"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the video"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current phase status"
+        },
+        "progress": {
+          "type": "number",
+          "description": "Progress percentage"
+        },
+        "remarks": {
+          "type": "string",
+          "description": "Remarks and special notes"
+        },
+        "schedule": {
+          "type": "object",
+          "description": "Detailed date scheduled phase mapping"
+        }
+      },
+      "required": [
+        "id",
+        "no",
+        "name",
+        "status",
+        "progress"
+      ]
+    }
+  },
+  "firestore": {
+    "videos/{videoId}": {
+      "schema": "VideoItem",
+      "description": "Collection of campaign videos"
+    }
+  }
+}
