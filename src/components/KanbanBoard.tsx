@@ -1,6 +1,6 @@
 import React from 'react';
 import { VideoItem, VideoStatus } from '../types';
-import { STATUS_META, PHASE_META } from '../data';
+import { STATUS_META, PHASE_META, isRedDay } from '../data';
 import { ArrowLeft, ArrowRight, Video, FileText, BarChart } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -16,7 +16,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos, onUpdateVideoS
     { status: '1차 피드백', title: '💬 1차 피드백', meta: STATUS_META['1차 피드백'] },
     { status: '종편 편집', title: '🎬 종편 편집', meta: STATUS_META['종편 편집'] },
     { status: '최종 피드백', title: '📝 최종 피드백', meta: STATUS_META['최종 피드백'] },
-    { status: '마스터 전달', title: '🧸 마스터 전달', meta: STATUS_META['마스터 전달'] },
+    { status: '최종 수정', title: '🎬 최종 수정', meta: STATUS_META['최종 수정'] },
     { status: '완료', title: '🧡 완료', meta: STATUS_META['완료'] },
     { status: '지연', title: '⚠️ 지연', meta: STATUS_META['지연'] },
   ];
@@ -29,7 +29,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos, onUpdateVideoS
       '1차 피드백',
       '종편 편집',
       '최종 피드백',
-      '마스터 전달',
+      '최종 수정',
       '완료',
       '지연'
     ];
@@ -49,11 +49,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos, onUpdateVideoS
 
   // Calculate some video-specific info (e.g., scheduled days count)
   const getScheduledDaysCount = (video: VideoItem) => {
-    return Object.values(video.schedule).filter((v) => v !== '').length;
+    return Object.entries(video.schedule).filter(([date, phase]) => phase !== '' && !isRedDay(date)).length;
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3" id="kanban-grid-container">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-8 gap-3" id="kanban-grid-container">
       {columns.map((col) => {
         const colVideos = videos.filter((v) => v.status === col.status);
 

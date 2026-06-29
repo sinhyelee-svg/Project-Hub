@@ -1,5 +1,28 @@
 import { VideoItem, SchedulePhase, VideoStatus } from './types';
 
+// Helper to identify Sunday/Saturdays or Korean Holidays
+export const isRedDay = (dateStr: string): boolean => {
+  const [mStr, dStr] = dateStr.split('/');
+  const month = parseInt(mStr);
+  const dayNum = parseInt(dStr);
+  
+  // Specific requested holidays
+  if (month === 7 && dayNum === 17) return true;
+  if (month === 9 && (dayNum === 24 || dayNum === 25 || dayNum === 26)) return true;
+  
+  // Weekends
+  if (month === 7) {
+    return (dayNum + 2) % 7 === 6 || (dayNum + 2) % 7 === 0; // July 1 is Wed
+  }
+  if (month === 8) {
+    return (dayNum + 5) % 7 === 6 || (dayNum + 5) % 7 === 0; // Aug 1 is Sat
+  }
+  if (month === 9) {
+    return (dayNum + 1) % 7 === 6 || (dayNum + 1) % 7 === 0; // Sep 1 is Tue
+  }
+  return false;
+};
+
 // Helper to generate dates array from July 1 to September 30
 export function generateDateList(): string[] {
   const dates: string[] = [];
@@ -169,9 +192,9 @@ export const PHASE_META: Record<
   },
   '가편 편집': {
     label: '가편 편집',
-    color: 'text-blue-700',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
+    color: 'text-sky-700',
+    bg: 'bg-sky-50',
+    border: 'border-sky-200',
     emoji: '🎞️',
   },
   '1차 피드백': {
@@ -183,9 +206,9 @@ export const PHASE_META: Record<
   },
   '종편 편집': {
     label: '종편 편집',
-    color: 'text-indigo-700',
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-200',
+    color: 'text-orange-700',
+    bg: 'bg-orange-50',
+    border: 'border-orange-200',
     emoji: '🎬',
   },
   '최종 피드백': {
@@ -195,18 +218,18 @@ export const PHASE_META: Record<
     border: 'border-pink-200',
     emoji: '📝',
   },
-  '마스터 전달': {
-    label: '마스터 전달',
-    color: 'text-amber-700',
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
-    emoji: '🧸',
-  },
-  '완료': {
-    label: '완료',
+  '최종 수정': {
+    label: '최종 수정',
     color: 'text-emerald-700',
     bg: 'bg-emerald-50',
     border: 'border-emerald-200',
+    emoji: '🎬',
+  },
+  '완료': {
+    label: '완료',
+    color: 'text-amber-700',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
     emoji: '🧡',
   },
   '지연': {

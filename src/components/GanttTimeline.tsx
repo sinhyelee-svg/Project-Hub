@@ -1,36 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { VideoItem, SchedulePhase } from '../types';
-import { DATE_LIST, PHASE_META, STATUS_META } from '../data';
+import { DATE_LIST, PHASE_META, STATUS_META, isRedDay } from '../data';
 import { Palette, Trash2, CalendarRange, MousePointerClick, ChevronRight, Check } from 'lucide-react';
 import { motion } from 'motion/react';
-
-// Helper to identify Sunday/Saturdays or Korean Holidays
-const isRedDay = (dateStr: string): boolean => {
-  const [mStr, dStr] = dateStr.split('/');
-  const month = parseInt(mStr);
-  const dayNum = parseInt(dStr);
-  
-  // Specific requested holidays
-  if (month === 7 && dayNum === 17) return true;
-  if (month === 9 && (dayNum === 24 || dayNum === 25 || dayNum === 26)) return true;
-  
-  // Weekends
-  if (month === 7) {
-    return (dayNum + 2) % 7 === 6 || (dayNum + 2) % 7 === 0; // July 1 is Wed
-  }
-  if (month === 8) {
-    return (dayNum + 5) % 7 === 6 || (dayNum + 5) % 7 === 0; // Aug 1 is Sat
-  }
-  if (month === 9) {
-    return (dayNum + 1) % 7 === 6 || (dayNum + 1) % 7 === 0; // Sep 1 is Tue
-  }
-  return false;
-};
 
 interface GanttTimelineProps {
   videos: VideoItem[];
   onUpdateSchedule: (videoId: string, date: string, phase: SchedulePhase) => void;
-  onUpdateScheduleRange: (videoId: string, startIdx: number, endIdx: number, phase: SchedulePhase) => void;
+  onUpdateScheduleRange: (videoId: string, startIdx: number, endIdx: number, phase: SchedulePhase, excludeRedDays?: boolean) => void;
 }
 
 export const GanttTimeline: React.FC<GanttTimelineProps> = ({
@@ -48,6 +25,7 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
   const [bulkStartIdx, setBulkStartIdx] = useState<number>(0);
   const [bulkEndIdx, setBulkEndIdx] = useState<number>(10);
   const [bulkPhase, setBulkPhase] = useState<SchedulePhase>('대기');
+  const [excludeRedDays, setExcludeRedDays] = useState<boolean>(true);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -88,7 +66,7 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
     if (!bulkVideoId) return;
     const start = Math.min(bulkStartIdx, bulkEndIdx);
     const end = Math.max(bulkStartIdx, bulkEndIdx);
-    onUpdateScheduleRange(bulkVideoId, start, end, bulkPhase);
+    onUpdateScheduleRange(bulkVideoId, start, end, bulkPhase, excludeRedDays);
     setIsBulkOpen(false);
   };
 
@@ -224,6 +202,19 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
                 ))}
                 <option value="">지우기 (빈 칸)</option>
               </select>
+            </div>
+
+            <div className="flex items-center gap-2 h-9 mb-1">
+              <input
+                type="checkbox"
+                id="exclude-red-days-checkbox"
+                checked={excludeRedDays}
+                onChange={(e) => setExcludeRedDays(e.target.checked)}
+                className="rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer"
+              />
+              <label htmlFor="exclude-red-days-checkbox" className="text-xs font-semibold text-slate-600 select-none cursor-pointer">
+                주말/공휴일 제외
+              </label>
             </div>
 
             <div className="flex gap-2">

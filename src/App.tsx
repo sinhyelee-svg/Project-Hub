@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { VideoItem, VideoStatus, SchedulePhase } from './types';
-import { INITIAL_VIDEOS, DATE_LIST } from './data';
+import { INITIAL_VIDEOS, DATE_LIST, isRedDay } from './data';
 import { DashboardStats } from './components/DashboardStats';
 import { GanttTimeline } from './components/GanttTimeline';
 import { VideoListTable } from './components/VideoListTable';
@@ -86,8 +86,8 @@ export default function App() {
     switch (latestPhase) {
       case '완료':
         return { status: '완료', progress: 100 };
-      case '마스터 전달':
-        return { status: '마스터 전달', progress: 95 };
+      case '최종 수정':
+        return { status: '최종 수정', progress: 95 };
       case '최종 피드백':
         return { status: '최종 피드백', progress: 80 };
       case '종편 편집':
@@ -129,7 +129,8 @@ export default function App() {
     videoId: string,
     startIdx: number,
     endIdx: number,
-    phase: SchedulePhase
+    phase: SchedulePhase,
+    excludeRedDays?: boolean
   ) => {
     const video = videos.find((v) => v.id === videoId);
     if (!video) return;
@@ -138,6 +139,9 @@ export default function App() {
     for (let i = startIdx; i <= endIdx; i++) {
       const date = DATE_LIST[i];
       if (date) {
+        if (excludeRedDays && isRedDay(date)) {
+          continue;
+        }
         newSchedule[date] = phase;
       }
     }
@@ -162,14 +166,14 @@ export default function App() {
 
     const item = { ...video, [field]: value };
     
-    // Automation: Auto progress on status change based on unified 8-phase values
+    // Automation: Auto progress on status change based on unified status values
     if (field === 'status') {
       const status = value as VideoStatus;
       switch (status) {
         case '완료':
           item.progress = 100;
           break;
-        case '마스터 전달':
+        case '최종 수정':
           item.progress = 95;
           break;
         case '최종 피드백':
@@ -194,7 +198,7 @@ export default function App() {
     } else if (field === 'progress') {
       const progress = value as number;
       if (progress >= 100) item.status = '완료';
-      else if (progress >= 95) item.status = '마스터 전달';
+      else if (progress >= 95) item.status = '최종 수정';
       else if (progress >= 80) item.status = '최종 피드백';
       else if (progress >= 60) item.status = '종편 편집';
       else if (progress >= 40) item.status = '1차 피드백';

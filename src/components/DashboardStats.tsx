@@ -22,7 +22,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ videos }) => {
     { status: '1차 피드백', label: '1차 피드백', desc: '피드백 조율' },
     { status: '종편 편집', label: '종편 편집', desc: '종합 후반작업' },
     { status: '최종 피드백', label: '최종 피드백', desc: '최종 검수' },
-    { status: '마스터 전달', label: '마스터 전달', desc: '최종본 인도' },
+    { status: '최종 수정', label: '최종 수정', desc: '최종 피드백 반영 및 수정' },
     { status: '완료', label: '완료', desc: '제작 최종 완료' },
     { status: '지연', label: '지연', desc: '일정 지연' },
   ];
@@ -100,7 +100,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ videos }) => {
           <span>워크플로우 진행 단계</span>
         </h3>
         
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3" id="pipeline-steps-grid">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-3" id="pipeline-steps-grid">
           {stages.map((stage, idx) => {
             const count = videos.filter((v) => v.status === stage.status).length;
             const meta = STATUS_META[stage.status];
@@ -127,7 +127,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({ videos }) => {
                 </div>
 
                 {/* Connective Flow Arrows for Desktop screens */}
-                {!isLast && idx !== 6 && ( // don't connect after '완료' or '지연'
+                {!isLast && idx !== 6 && ( // don't connect after '완료' (index 6) or '지연' (index 7)
                   <div className="hidden lg:flex absolute top-1/2 -right-2 -translate-y-1/2 z-10 w-4 h-4 bg-white border border-slate-200 rounded-full items-center justify-center shadow-2xs">
                     <ChevronRight className="w-2.5 h-2.5 text-slate-400" />
                   </div>

@@ -170,7 +170,7 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
       </AnimatePresence>
 
       {/* Table Content */}
-      <div className="overflow-x-auto" id="video-table-scroller">
+      <div className="overflow-x-auto min-h-[380px] pb-40" id="video-table-scroller">
         <table className="min-w-[950px] w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/70 border-b border-slate-200 text-slate-500 text-xs font-bold font-display">
@@ -236,7 +236,7 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
                               className="fixed inset-0 z-10"
                               onClick={() => setActiveDropdownId(null)}
                             />
-                            <div className="absolute left-4 right-4 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-20">
+                            <div className="absolute left-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 z-50">
                               {Object.entries(STATUS_META).map(([statusKey, statusMeta]) => {
                                 const active = video.status === statusKey;
                                 return (
@@ -247,15 +247,17 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
                                       onUpdateVideoField(video.id, 'status', statusKey as VideoStatus);
                                       setActiveDropdownId(null);
                                     }}
-                                    className={`w-full flex items-center justify-between px-3 py-1.5 text-left text-xs transition-colors hover:bg-slate-50 ${
-                                      active ? `${statusMeta.color} font-semibold` : 'text-slate-600'
+                                    className={`w-full flex items-center justify-between px-2.5 py-1.5 text-left text-xs transition-all hover:bg-slate-50 ${
+                                      active ? 'bg-slate-50/50' : ''
                                     }`}
                                   >
-                                    <span className="flex items-center gap-1.5">
-                                      <span>{statusMeta.emoji}</span>
-                                      <span>{statusMeta.label}</span>
+                                    <span className="flex items-center gap-2">
+                                      <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[11px] font-semibold leading-none ${statusMeta.bg} ${statusMeta.color} ${statusMeta.border}`}>
+                                        <span>{statusMeta.emoji}</span>
+                                        <span>{statusMeta.label}</span>
+                                      </span>
                                     </span>
-                                    {active && <Check className="w-3.5 h-3.5 text-indigo-600" />}
+                                    {active && <Check className="w-3.5 h-3.5 text-slate-700 shrink-0" />}
                                   </button>
                                 );
                               })}
