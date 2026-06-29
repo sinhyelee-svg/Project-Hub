@@ -127,7 +127,7 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
 
       {/* Table Content */}
       <div className="overflow-x-auto" id="video-table-scroller">
-        <table className="w-full text-left border-collapse">
+        <table className="min-w-[950px] w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/70 border-b border-slate-200 text-slate-500 text-xs font-bold font-display">
               <th className="py-3 px-4 w-12 text-center">No</th>

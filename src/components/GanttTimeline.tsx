@@ -229,7 +229,7 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
         className="overflow-x-auto w-full relative border-slate-200 cursor-cell select-none"
         id="timeline-scroll-container"
       >
-        <table className="w-full border-collapse border-spacing-0 table-fixed">
+        <table className="min-w-[3100px] w-full border-collapse border-spacing-0 table-fixed">
           {/* Header Row 1: Month blocks */}
           <thead>
             <tr className="border-b border-slate-200 text-slate-400">
@@ -239,12 +239,15 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
               <th className="sticky left-[225px] bg-slate-50 z-30 w-[80px] min-w-[80px] p-0 m-0 border-r border-slate-200"></th>
               <th className="sticky left-[305px] bg-slate-50 z-30 w-[60px] min-w-[60px] p-0 m-0 border-r border-slate-200"></th>
               
-              {/* Month Spans: 7/1 to 7/31 (31 cols), 8/1 to 8/31 (31 cols) */}
+              {/* Month Spans: 7/1 to 7/31 (31 cols), 8/1 to 8/31 (31 cols), 9/1 to 9/30 (30 cols) */}
               <th colSpan={31} className="bg-indigo-50/70 text-indigo-900 font-bold text-xs py-1.5 text-center tracking-wider border-r border-slate-200 font-display">
                 7월 (JULY)
               </th>
-              <th colSpan={31} className="bg-sky-50/70 text-sky-900 font-bold text-xs py-1.5 text-center tracking-wider border-slate-200 font-display">
+              <th colSpan={31} className="bg-sky-50/70 text-sky-900 font-bold text-xs py-1.5 text-center tracking-wider border-r border-slate-200 font-display">
                 8월 (AUGUST)
+              </th>
+              <th colSpan={30} className="bg-emerald-50/70 text-emerald-900 font-bold text-xs py-1.5 text-center tracking-wider border-slate-200 font-display">
+                9월 (SEPTEMBER)
               </th>
             </tr>
 
@@ -265,8 +268,9 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
 
               {/* July days */}
               {Array.from({ length: 31 }).map((_, d) => {
-                const dayStr = `${d + 1}`;
-                const isWeekend = (d + 1) % 7 === 4 || (d + 1) % 7 === 5; // Simulating weekends
+                const dayNum = d + 1;
+                const dayStr = `${dayNum}`;
+                const isWeekend = (dayNum + 2) % 7 === 6 || (dayNum + 2) % 7 === 0; // July 1 is Wed
                 return (
                   <th
                     key={`july-${dayStr}`}
@@ -281,11 +285,29 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
 
               {/* August days */}
               {Array.from({ length: 31 }).map((_, d) => {
-                const dayStr = `${d + 1}`;
-                const isWeekend = (d + 2) % 7 === 4 || (d + 2) % 7 === 5; // Simulating weekends differently for Aug
+                const dayNum = d + 1;
+                const dayStr = `${dayNum}`;
+                const isWeekend = (dayNum + 5) % 7 === 6 || (dayNum + 5) % 7 === 0; // Aug 1 is Sat
                 return (
                   <th
                     key={`august-${dayStr}`}
+                    className={`text-center text-[10px] font-semibold w-7 min-w-7 py-2 border-r border-slate-100 ${
+                      isWeekend ? 'bg-rose-50/40 text-rose-500' : 'text-slate-500'
+                    }`}
+                  >
+                    {dayStr}
+                  </th>
+                );
+              })}
+
+              {/* September days */}
+              {Array.from({ length: 30 }).map((_, d) => {
+                const dayNum = d + 1;
+                const dayStr = `${dayNum}`;
+                const isWeekend = (dayNum + 1) % 7 === 6 || (dayNum + 1) % 7 === 0; // Sep 1 is Tue
+                return (
+                  <th
+                    key={`september-${dayStr}`}
                     className={`text-center text-[10px] font-semibold w-7 min-w-7 py-2 border-r border-slate-100 ${
                       isWeekend ? 'bg-rose-50/40 text-rose-500' : 'text-slate-500'
                     }`}
@@ -327,9 +349,18 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
                   {video.progress}%
                 </td>
 
-                {/* Days of July & August */}
-                {DATE_LIST.map((date) => {
+                {/* Days of July, August & September */}
+                {DATE_LIST.map((date, index) => {
                   const phase = video.schedule[date] || '';
+                  const prevDate = index > 0 ? DATE_LIST[index - 1] : null;
+                  const nextDate = index < DATE_LIST.length - 1 ? DATE_LIST[index + 1] : null;
+                  
+                  const prevPhase = prevDate ? (video.schedule[prevDate] || '') : '';
+                  const nextPhase = nextDate ? (video.schedule[nextDate] || '') : '';
+                  
+                  const isConnectedLeft = phase !== '' && phase === prevPhase;
+                  const isConnectedRight = phase !== '' && phase === nextPhase;
+
                   const meta = phase ? PHASE_META[phase as Exclude<SchedulePhase, ''>] : null;
                   
                   return (
@@ -337,19 +368,27 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
                       key={date}
                       onMouseDown={() => handleMouseDown(video.id, date)}
                       onMouseEnter={() => handleMouseEnter(video.id, date)}
-                      className={`relative text-center border-r border-slate-100 p-0 h-10 transition-all select-none hover:opacity-85 ${
-                        meta ? meta.bg : 'bg-transparent'
-                      }`}
+                      className={`relative text-center border-r border-slate-100 p-0 h-10 transition-all select-none hover:opacity-85 overflow-visible ${
+                        phase !== '' ? (isConnectedLeft ? 'z-10' : 'z-[15]') : 'z-0'
+                      } ${meta ? meta.bg : 'bg-transparent'}`}
                       title={`${video.name} - ${date}: ${phase || '지정 없음'}`}
                     >
                       {/* Interactive block overlay */}
                       {phase && (
                         <div 
-                          className={`absolute inset-y-1 inset-x-0.5 rounded-sm flex items-center justify-center border ${meta?.border}`}
+                          className={`absolute inset-y-1 flex items-center justify-center border overflow-visible ${meta?.border} ${meta?.bg} z-10
+                            ${isConnectedLeft ? 'left-0 border-l-0 rounded-l-none' : 'left-0.5 rounded-l-sm'}
+                            ${isConnectedRight ? 'right-0 border-r-0 rounded-r-none' : 'right-0.5 rounded-r-sm'}
+                          `}
                         >
-                          <span className="text-[10px] scale-90" role="img" aria-label={phase}>
-                            {meta?.emoji}
-                          </span>
+                          {!isConnectedLeft && (
+                            <span className={`absolute left-1.5 text-[9px] font-extrabold ${meta?.color} whitespace-nowrap flex items-center gap-1 select-none pointer-events-none z-20`}>
+                              <span className="text-[10px]" role="img" aria-label={phase}>
+                                {meta?.emoji}
+                              </span>
+                              <span className="opacity-95 tracking-tighter">{meta?.label}</span>
+                            </span>
+                          )}
                         </div>
                       )}
                     </td>

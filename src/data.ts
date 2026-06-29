@@ -1,6 +1,6 @@
 import { VideoItem, SchedulePhase, VideoStatus } from './types';
 
-// Helper to generate dates array from July 1 to August 31
+// Helper to generate dates array from July 1 to September 30
 export function generateDateList(): string[] {
   const dates: string[] = [];
   // July: 1 to 31
@@ -10,6 +10,10 @@ export function generateDateList(): string[] {
   // August: 1 to 31
   for (let d = 1; d <= 31; d++) {
     dates.push(`8/${d}`);
+  }
+  // September: 1 to 30
+  for (let d = 1; d <= 30; d++) {
+    dates.push(`9/${d}`);
   }
   return dates;
 }
@@ -21,7 +25,7 @@ function fillScheduleRange(
   schedule: Record<string, SchedulePhase>,
   startDay: number,
   endDay: number,
-  month: 7 | 8,
+  month: 7 | 8 | 9,
   phase: SchedulePhase
 ) {
   for (let d = startDay; d <= endDay; d++) {

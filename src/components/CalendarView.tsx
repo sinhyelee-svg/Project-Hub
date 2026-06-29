@@ -9,17 +9,20 @@ interface CalendarViewProps {
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
-  const [currentMonth, setCurrentMonth] = useState<7 | 8>(7); // 7 for July, 8 for August
+  const [currentMonth, setCurrentMonth] = useState<7 | 8 | 9>(7); // 7 for July, 8 for August, 9 for September
   const [selectedDay, setSelectedDay] = useState<number>(1); // Currently selected day of the month
 
   // Number of days in each month
-  const daysInMonth = 31; // Both July and August have 31 days
+  const daysInMonth = currentMonth === 9 ? 30 : 31;
 
   // Get weekday of 1st day of month (in 2026)
   // 2026년 7월 1일은 수요일 (Wednesday) -> Sunday index = 3
   // 2026년 8월 1일은 토요일 (Saturday) -> Sunday index = 6
-  const getFirstDayOffset = (month: 7 | 8) => {
-    return month === 7 ? 3 : 6;
+  // 2026년 9월 1일은 화요일 (Tuesday) -> Sunday index = 2
+  const getFirstDayOffset = (month: 7 | 8 | 9) => {
+    if (month === 7) return 3;
+    if (month === 8) return 6;
+    return 2;
   };
 
   const offset = getFirstDayOffset(currentMonth);
@@ -41,6 +44,26 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
 
   const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
 
+  const handlePrevMonth = () => {
+    if (currentMonth === 8) {
+      setCurrentMonth(7);
+      setSelectedDay(1);
+    } else if (currentMonth === 9) {
+      setCurrentMonth(8);
+      setSelectedDay(1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonth === 7) {
+      setCurrentMonth(8);
+      setSelectedDay(1);
+    } else if (currentMonth === 8) {
+      setCurrentMonth(9);
+      setSelectedDay(1);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" id="calendar-view-root">
       {/* Calendar Grid Section */}
@@ -58,24 +81,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
 
           <div className="flex gap-1">
             <button
-              onClick={() => {
-                setCurrentMonth(7);
-                setSelectedDay(1);
-              }}
+              onClick={handlePrevMonth}
               disabled={currentMonth === 7}
               className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-40 rounded-lg transition-all"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-bold px-3 py-1.5 text-slate-700 bg-slate-100 rounded-lg flex items-center justify-center">
+            <span className="text-xs font-bold px-3 py-1.5 text-slate-700 bg-slate-100 rounded-lg flex items-center justify-center min-w-[50px]">
               {currentMonth}월
             </span>
             <button
-              onClick={() => {
-                setCurrentMonth(8);
-                setSelectedDay(1);
-              }}
-              disabled={currentMonth === 8}
+              onClick={handleNextMonth}
+              disabled={currentMonth === 9}
               className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-40 rounded-lg transition-all"
             >
               <ChevronRight className="w-4 h-4" />
