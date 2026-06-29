@@ -20,6 +20,12 @@ import {
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { 
+  subscribeToVideos, 
+  saveVideoToFirestore, 
+  deleteVideoFromFirestore, 
+  resetVideosInFirestore 
+} from './firebase';
 
 const LOCAL_STORAGE_KEY = 'campaign_video_timeline_data';
 
@@ -28,70 +34,28 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'timeline' | 'table' | 'kanban' | 'calendar'>('timeline');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Load from local storage or initialize
+  // Real-time synchronization with Firebase Firestore
   useEffect(() => {
+    // Determine the local cache as a starting fallback to avoid initial blank screen
+    let initialFallback = INITIAL_VIDEOS;
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved) as VideoItem[];
-        // Sanitize and map old statuses/schedules to the new 8-phase values
-        const sanitized = parsed.map(video => {
-          let status = video.status;
-          if ((status as string) === '진행중') {
-            status = '가편 편집';
-          } else if ((status as string) === '검수중') {
-            status = '1차 피드백';
-          }
-          
-          const validStatuses: VideoStatus[] = [
-            '대기',
-            '가편 편집',
-            '1차 피드백',
-            '종편 편집',
-            '최종 피드백',
-            '마스터 전달',
-            '완료',
-            '지연'
-          ];
-          
-          if (!validStatuses.includes(status)) {
-            status = '대기';
-          }
-
-          // Also sanitize the schedule phases
-          const schedule = { ...video.schedule };
-          Object.keys(schedule).forEach(date => {
-            const phase = schedule[date];
-            if ((phase as string) === '진행중') {
-              schedule[date] = '가편 편집';
-            } else if ((phase as string) === '검수중') {
-              schedule[date] = '1차 피드백';
-            } else if (phase && !validStatuses.includes(phase as any)) {
-              schedule[date] = '대기';
-            }
-          });
-
-          return {
-            ...video,
-            status,
-            schedule,
-          };
-        });
-        setVideos(sanitized);
+        initialFallback = JSON.parse(saved) as VideoItem[];
       } catch (e) {
-        console.error('Error loading data from localStorage, resetting to initial', e);
-        setVideos(INITIAL_VIDEOS);
+        console.error('Error reading localStorage cache', e);
       }
-    } else {
-      setVideos(INITIAL_VIDEOS);
     }
+
+    // Subscribe to Firestore updates
+    const unsubscribe = subscribeToVideos((syncedVideos) => {
+      setVideos(syncedVideos);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(syncedVideos));
+    }, initialFallback);
+
+    return () => unsubscribe();
   }, []);
 
-  // Save to local storage whenever videos state changes
-  const saveToLocalStorage = (data: VideoItem[]) => {
-    setVideos(data);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
-  };
 
   // Helper to calculate status and progress based on schedule drawing
   const getCalculatedStatusAndProgress = (schedule: Record<string, SchedulePhase>): { status: VideoStatus; progress: number } | null => {
@@ -143,23 +107,21 @@ export default function App() {
 
   // 1. Update single cell in the Gantt timeline
   const handleUpdateSchedule = (videoId: string, date: string, phase: SchedulePhase) => {
-    const updated = videos.map((video) => {
-      if (video.id === videoId) {
-        const nextSchedule = {
-          ...video.schedule,
-          [date]: phase,
-        };
-        const calc = getCalculatedStatusAndProgress(nextSchedule);
-        return {
-          ...video,
-          schedule: nextSchedule,
-          status: calc ? calc.status : video.status,
-          progress: calc ? calc.progress : video.progress,
-        };
-      }
-      return video;
-    });
-    saveToLocalStorage(updated);
+    const video = videos.find((v) => v.id === videoId);
+    if (!video) return;
+
+    const nextSchedule = {
+      ...video.schedule,
+      [date]: phase,
+    };
+    const calc = getCalculatedStatusAndProgress(nextSchedule);
+    const updatedVideo: VideoItem = {
+      ...video,
+      schedule: nextSchedule,
+      status: calc ? calc.status : video.status,
+      progress: calc ? calc.progress : video.progress,
+    };
+    saveVideoToFirestore(updatedVideo);
   };
 
   // 2. Update a range of dates in the Gantt timeline (Bulk update)
@@ -169,26 +131,24 @@ export default function App() {
     endIdx: number,
     phase: SchedulePhase
   ) => {
-    const updated = videos.map((video) => {
-      if (video.id === videoId) {
-        const newSchedule = { ...video.schedule };
-        for (let i = startIdx; i <= endIdx; i++) {
-          const date = DATE_LIST[i];
-          if (date) {
-            newSchedule[date] = phase;
-          }
-        }
-        const calc = getCalculatedStatusAndProgress(newSchedule);
-        return {
-          ...video,
-          schedule: newSchedule,
-          status: calc ? calc.status : video.status,
-          progress: calc ? calc.progress : video.progress,
-        };
+    const video = videos.find((v) => v.id === videoId);
+    if (!video) return;
+
+    const newSchedule = { ...video.schedule };
+    for (let i = startIdx; i <= endIdx; i++) {
+      const date = DATE_LIST[i];
+      if (date) {
+        newSchedule[date] = phase;
       }
-      return video;
-    });
-    saveToLocalStorage(updated);
+    }
+    const calc = getCalculatedStatusAndProgress(newSchedule);
+    const updatedVideo: VideoItem = {
+      ...video,
+      schedule: newSchedule,
+      status: calc ? calc.status : video.status,
+      progress: calc ? calc.progress : video.progress,
+    };
+    saveVideoToFirestore(updatedVideo);
   };
 
   // 3. Update any metadata field in list view
@@ -197,56 +157,53 @@ export default function App() {
     field: K,
     value: VideoItem[K]
   ) => {
-    const updated = videos.map((video) => {
-      if (video.id === id) {
-        const item = { ...video, [field]: value };
-        
-        // Automation: Auto progress on status change based on unified 8-phase values
-        if (field === 'status') {
-          const status = value as VideoStatus;
-          switch (status) {
-            case '완료':
-              item.progress = 100;
-              break;
-            case '마스터 전달':
-              item.progress = 95;
-              break;
-            case '최종 피드백':
-              item.progress = 80;
-              break;
-            case '종편 편집':
-              item.progress = 60;
-              break;
-            case '1차 피드백':
-              item.progress = 40;
-              break;
-            case '가편 편집':
-              item.progress = 20;
-              break;
-            case '지연':
-              item.progress = 50;
-              break;
-            case '대기':
-              item.progress = 0;
-              break;
-          }
-        } else if (field === 'progress') {
-          const progress = value as number;
-          if (progress >= 100) item.status = '완료';
-          else if (progress >= 95) item.status = '마스터 전달';
-          else if (progress >= 80) item.status = '최종 피드백';
-          else if (progress >= 60) item.status = '종편 편집';
-          else if (progress >= 40) item.status = '1차 피드백';
-          else if (progress >= 20) item.status = '가편 편집';
-          else if (progress > 0) item.status = '가편 편집';
-          else item.status = '대기';
-        }
+    const video = videos.find((v) => v.id === id);
+    if (!video) return;
 
-        return item;
+    const item = { ...video, [field]: value };
+    
+    // Automation: Auto progress on status change based on unified 8-phase values
+    if (field === 'status') {
+      const status = value as VideoStatus;
+      switch (status) {
+        case '완료':
+          item.progress = 100;
+          break;
+        case '마스터 전달':
+          item.progress = 95;
+          break;
+        case '최종 피드백':
+          item.progress = 80;
+          break;
+        case '종편 편집':
+          item.progress = 60;
+          break;
+        case '1차 피드백':
+          item.progress = 40;
+          break;
+        case '가편 편집':
+          item.progress = 20;
+          break;
+        case '지연':
+          item.progress = 50;
+          break;
+        case '대기':
+          item.progress = 0;
+          break;
       }
-      return video;
-    });
-    saveToLocalStorage(updated);
+    } else if (field === 'progress') {
+      const progress = value as number;
+      if (progress >= 100) item.status = '완료';
+      else if (progress >= 95) item.status = '마스터 전달';
+      else if (progress >= 80) item.status = '최종 피드백';
+      else if (progress >= 60) item.status = '종편 편집';
+      else if (progress >= 40) item.status = '1차 피드백';
+      else if (progress >= 20) item.status = '가편 편집';
+      else if (progress > 0) item.status = '가편 편집';
+      else item.status = '대기';
+    }
+
+    saveVideoToFirestore(item);
   };
 
   // 4. Update status in Kanban Board view
@@ -266,7 +223,7 @@ export default function App() {
       remarks: '',
       schedule: {},
     };
-    saveToLocalStorage([...videos, newVideo]);
+    saveVideoToFirestore(newVideo);
   };
 
   // 6. Delete a video from the campaign
@@ -277,7 +234,7 @@ export default function App() {
       ...v,
       no: index + 1,
     }));
-    saveToLocalStorage(reindexed);
+    resetVideosInFirestore(reindexed);
   };
 
   // 7. Reset data back to default template
@@ -287,7 +244,7 @@ export default function App() {
     );
     if (!confirmReset) return;
 
-    saveToLocalStorage(INITIAL_VIDEOS);
+    resetVideosInFirestore(INITIAL_VIDEOS);
   };
 
   // 8. Export schedule state as a JSON file download
@@ -316,7 +273,7 @@ export default function App() {
             (item) => item.id && typeof item.name === 'string' && typeof item.status === 'string'
           );
           if (isValid) {
-            saveToLocalStorage(parsed);
+            resetVideosInFirestore(parsed);
             alert('데이터 가져오기가 완료되었습니다!');
           } else {
             alert('올바르지 않은 일정 백업 파일 형식입니다.');
