@@ -1,8 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { VideoItem, VideoStatus } from '../types';
 import { STATUS_META } from '../data';
 import { Search, Plus, Trash2, Sliders, ChevronDown, Check, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+interface EditableInputProps {
+  value: string;
+  onSave: (val: string) => void;
+  className?: string;
+  placeholder?: string;
+}
+
+const EditableInput: React.FC<EditableInputProps> = ({
+  value,
+  onSave,
+  className,
+  placeholder,
+}) => {
+  const [localValue, setLocalValue] = useState(value);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleBlur = () => {
+    if (localValue !== value) {
+      onSave(localValue);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    }
+  };
+
+  return (
+    <input
+      type="text"
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+};
 
 interface VideoListTableProps {
   videos: VideoItem[];
@@ -163,10 +207,9 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
 
                     {/* Video Name */}
                     <td className="py-3.5 px-4 font-semibold text-slate-800">
-                      <input
-                        type="text"
+                      <EditableInput
                         value={video.name}
-                        onChange={(e) => onUpdateVideoField(video.id, 'name', e.target.value)}
+                        onSave={(val) => onUpdateVideoField(video.id, 'name', val)}
                         className="w-full bg-transparent hover:bg-slate-100/50 focus:bg-white px-1.5 py-1 rounded-md border border-transparent focus:border-slate-300 focus:outline-hidden transition-all text-slate-800 font-semibold"
                       />
                     </td>
@@ -257,10 +300,9 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
 
                     {/* Remarks/Notes */}
                     <td className="py-3.5 px-4">
-                      <input
-                        type="text"
+                      <EditableInput
                         value={video.remarks}
-                        onChange={(e) => onUpdateVideoField(video.id, 'remarks', e.target.value)}
+                        onSave={(val) => onUpdateVideoField(video.id, 'remarks', val)}
                         placeholder="특이사항 기록..."
                         className="w-full bg-transparent hover:bg-slate-100/50 focus:bg-white px-2 py-1 rounded-md border border-transparent focus:border-slate-300 focus:outline-hidden text-slate-600 font-medium transition-all"
                       />
