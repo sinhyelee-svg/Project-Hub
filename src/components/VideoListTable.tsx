@@ -247,15 +247,13 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
                                       onUpdateVideoField(video.id, 'status', statusKey as VideoStatus);
                                       setActiveDropdownId(null);
                                     }}
-                                    className={`w-full flex items-center justify-between px-2.5 py-1.5 text-left text-xs transition-all hover:bg-slate-50 ${
-                                      active ? 'bg-slate-50/50' : ''
+                                    className={`w-full flex items-center justify-between px-3 py-1.5 text-left text-xs transition-colors hover:bg-slate-50 ${
+                                      active ? `${statusMeta.color} font-semibold bg-slate-50/60` : 'text-slate-600'
                                     }`}
                                   >
-                                    <span className="flex items-center gap-2">
-                                      <span className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[11px] font-semibold leading-none ${statusMeta.bg} ${statusMeta.color} ${statusMeta.border}`}>
-                                        <span>{statusMeta.emoji}</span>
-                                        <span>{statusMeta.label}</span>
-                                      </span>
+                                    <span className="flex items-center gap-1.5">
+                                      <span>{statusMeta.emoji}</span>
+                                      <span>{statusMeta.label}</span>
                                     </span>
                                     {active && <Check className="w-3.5 h-3.5 text-slate-700 shrink-0" />}
                                   </button>

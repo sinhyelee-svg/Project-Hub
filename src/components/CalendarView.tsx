@@ -125,6 +125,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
             const holidayName =
               currentMonth === 7 && day === 17
                 ? '제헌절'
+                : currentMonth === 8 && day === 17
+                ? '대체공휴일'
                 : currentMonth === 9 && (day === 24 || day === 25 || day === 26)
                 ? '추석 연휴'
                 : null;

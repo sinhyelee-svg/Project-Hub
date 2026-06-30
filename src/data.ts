@@ -8,6 +8,7 @@ export const isRedDay = (dateStr: string): boolean => {
   
   // Specific requested holidays
   if (month === 7 && dayNum === 17) return true;
+  if (month === 8 && dayNum === 17) return true; // 광복절 대체공휴일
   if (month === 9 && (dayNum === 24 || dayNum === 25 || dayNum === 26)) return true;
   
   // Weekends

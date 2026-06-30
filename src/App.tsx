@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { VideoItem, VideoStatus, SchedulePhase } from './types';
-import { INITIAL_VIDEOS, DATE_LIST, isRedDay } from './data';
+import { INITIAL_VIDEOS, DATE_LIST, isRedDay, PHASE_META } from './data';
 import { DashboardStats } from './components/DashboardStats';
 import { GanttTimeline } from './components/GanttTimeline';
 import { VideoListTable } from './components/VideoListTable';
@@ -33,6 +33,49 @@ export default function App() {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [activeTab, setActiveTab] = useState<'timeline' | 'table' | 'kanban' | 'calendar'>('timeline');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Date and To Do configuration - computed based on Korea Standard Time (KST, UTC+9)
+  const getTodayAndTomorrow = () => {
+    const now = new Date();
+    const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
+    
+    const kstToday = new Date(utcTimestamp + (3600000 * 9));
+    // Since the project timeline is planned for the year 2026, ensure the year is pinned to 2026
+    if (kstToday.getFullYear() !== 2026) {
+      kstToday.setFullYear(2026);
+    }
+    
+    const kstTomorrow = new Date(kstToday);
+    kstTomorrow.setDate(kstToday.getDate() + 1);
+    
+    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+    
+    const todayMonth = kstToday.getMonth() + 1;
+    const todayDate = kstToday.getDate();
+    const todayDay = weekdays[kstToday.getDay()];
+    
+    const tomorrowMonth = kstTomorrow.getMonth() + 1;
+    const tomorrowDate = kstTomorrow.getDate();
+    const tomorrowDay = weekdays[kstTomorrow.getDay()];
+    
+    return {
+      todayStr: `${todayMonth}/${todayDate}`,
+      tomorrowStr: `${tomorrowMonth}/${tomorrowDate}`,
+      labelToday: `${todayMonth}월 ${todayDate}일 (${todayDay})`,
+      labelTomorrow: `${tomorrowMonth}월 ${tomorrowDate}일 (${tomorrowDay})`
+    };
+  };
+
+  const { todayStr, tomorrowStr, labelToday, labelTomorrow } = getTodayAndTomorrow();
+
+  // Filter tasks based on schedule keys
+  const todayTasks = videos
+    .map((v) => ({ video: v, phase: v.schedule[todayStr] || '' }))
+    .filter((item) => item.phase !== '');
+
+  const tomorrowTasks = videos
+    .map((v) => ({ video: v, phase: v.schedule[tomorrowStr] || '' }))
+    .filter((item) => item.phase !== '');
 
   // Real-time synchronization with Firebase Firestore
   useEffect(() => {
@@ -114,12 +157,9 @@ export default function App() {
       ...video.schedule,
       [date]: phase,
     };
-    const calc = getCalculatedStatusAndProgress(nextSchedule);
     const updatedVideo: VideoItem = {
       ...video,
       schedule: nextSchedule,
-      status: calc ? calc.status : video.status,
-      progress: calc ? calc.progress : video.progress,
     };
     saveVideoToFirestore(updatedVideo);
   };
@@ -145,12 +185,9 @@ export default function App() {
         newSchedule[date] = phase;
       }
     }
-    const calc = getCalculatedStatusAndProgress(newSchedule);
     const updatedVideo: VideoItem = {
       ...video,
       schedule: newSchedule,
-      status: calc ? calc.status : video.status,
-      progress: calc ? calc.progress : video.progress,
     };
     saveVideoToFirestore(updatedVideo);
   };
@@ -312,7 +349,7 @@ export default function App() {
           </div>
 
           {/* Navigation Links (replacing old Tab bar) */}
-          <div className="space-y-1.5 flex-1">
+          <div className="space-y-1.5 mb-5 shrink-0">
             <button
               onClick={() => setActiveTab('timeline')}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-xs font-semibold ${
@@ -362,9 +399,91 @@ export default function App() {
             </button>
           </div>
 
+          {/* Today's To Do / Tomorrow's To Do Widget */}
+          <div className="flex-1 overflow-y-auto space-y-5 mb-4 pr-1 scrollbar-thin flex flex-col min-h-0 border-t border-stone-200/75 pt-4" id="sidebar-todo-container">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-1 shrink-0">
+              <span className="text-xs font-black text-stone-500 uppercase tracking-wider">Planner widget</span>
+            </div>
+
+            {/* Today's To Do */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-black text-slate-800 flex items-center gap-1.5">
+                  <span>📌</span>
+                  <span>Today</span>
+                </span>
+                <span className="text-xs text-slate-500 font-bold">{labelToday}</span>
+              </div>
+              <div className="space-y-2">
+                {todayTasks.length === 0 ? (
+                  <div className="text-xs text-stone-500 bg-stone-200/10 rounded-xl p-3 text-center border border-dashed border-stone-200/80 font-medium">
+                    오늘 일정이 없습니다.
+                  </div>
+                ) : (
+                  todayTasks.map(({ video, phase }) => {
+                    const meta = PHASE_META[phase as Exclude<SchedulePhase, ''>];
+                    return (
+                      <div
+                        key={`today-${video.id}`}
+                        className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-3xs flex flex-col gap-1.5 hover:shadow-xs transition-shadow"
+                      >
+                        <div className="flex flex-wrap">
+                          <span className={`px-2 py-0.5 rounded-md text-[10.5px] font-black border leading-none shadow-3xs tracking-tight ${meta?.bg} ${meta?.color} ${meta?.border}`}>
+                            {meta?.emoji} {meta?.label}
+                          </span>
+                        </div>
+                        <div className="text-xs font-extrabold text-slate-800 leading-snug break-all" title={video.name}>
+                          {video.name}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Tomorrow's To Do */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-black text-slate-800 flex items-center gap-1.5">
+                  <span>🚀</span>
+                  <span>Tomorrow</span>
+                </span>
+                <span className="text-xs text-slate-500 font-bold">{labelTomorrow}</span>
+              </div>
+              <div className="space-y-2">
+                {tomorrowTasks.length === 0 ? (
+                  <div className="text-xs text-stone-500 bg-stone-200/10 rounded-xl p-3 text-center border border-dashed border-stone-200/80 font-medium">
+                    내일 일정이 없습니다.
+                  </div>
+                ) : (
+                  tomorrowTasks.map(({ video, phase }) => {
+                    const meta = PHASE_META[phase as Exclude<SchedulePhase, ''>];
+                    return (
+                      <div
+                        key={`tomorrow-${video.id}`}
+                        className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-3xs flex flex-col gap-1.5 hover:shadow-xs transition-shadow"
+                      >
+                        <div className="flex flex-wrap">
+                          <span className={`px-2 py-0.5 rounded-md text-[10.5px] font-black border leading-none shadow-3xs tracking-tight ${meta?.bg} ${meta?.color} ${meta?.border}`}>
+                            {meta?.emoji} {meta?.label}
+                          </span>
+                        </div>
+                        <div className="text-xs font-extrabold text-slate-800 leading-snug break-all" title={video.name}>
+                          {video.name}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Sidebar Footer User Details */}
-          <div className="pt-6 border-t border-slate-200">
-            <div className="flex items-center gap-3 bg-stone-100 p-3 rounded-xl border border-stone-200/60">
+          <div className="pt-4 border-t border-slate-200 shrink-0">
+            <div className="flex items-center gap-3 bg-stone-100 p-2.5 rounded-xl border border-stone-200/60">
               <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 font-extrabold flex items-center justify-center text-xs border border-blue-500/20 shrink-0">
                 SL
               </div>
@@ -412,7 +531,7 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="space-y-1 flex-1">
+              <div className="space-y-1 mb-4 shrink-0">
                 <button
                   onClick={() => {
                     setActiveTab('timeline');
@@ -474,7 +593,88 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="pt-6 border-t border-slate-200">
+              {/* Mobile Today/Tomorrow Widget */}
+              <div className="flex-1 overflow-y-auto space-y-5 mb-4 pr-1 border-t border-stone-200/75 pt-4" id="mobile-todo-container">
+                <div className="flex items-center justify-between pb-1">
+                  <span className="text-xs font-black text-stone-500 uppercase tracking-wider">Planner widget</span>
+                </div>
+
+                {/* Today's To Do */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] font-black text-slate-800 flex items-center gap-1.5">
+                      <span>📌</span>
+                      <span>Today</span>
+                    </span>
+                    <span className="text-xs text-slate-500 font-bold">{labelToday}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {todayTasks.length === 0 ? (
+                      <div className="text-xs text-stone-500 bg-stone-200/10 rounded-xl p-3 text-center border border-dashed border-stone-200/80 font-medium">
+                        오늘 일정이 없습니다.
+                      </div>
+                    ) : (
+                      todayTasks.map(({ video, phase }) => {
+                        const meta = PHASE_META[phase as Exclude<SchedulePhase, ''>];
+                        return (
+                          <div
+                            key={`m-today-${video.id}`}
+                            className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-3xs flex flex-col gap-1.5"
+                          >
+                            <div className="flex flex-wrap">
+                              <span className={`px-2 py-0.5 rounded-md text-[10.5px] font-black border leading-none shadow-3xs tracking-tight ${meta?.bg} ${meta?.color} ${meta?.border}`}>
+                                {meta?.emoji} {meta?.label}
+                              </span>
+                            </div>
+                            <div className="text-xs font-extrabold text-slate-800 leading-snug">
+                              {video.name}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Tomorrow's To Do */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] font-black text-slate-800 flex items-center gap-1.5">
+                      <span>🚀</span>
+                      <span>Tomorrow</span>
+                    </span>
+                    <span className="text-xs text-slate-500 font-bold">{labelTomorrow}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {tomorrowTasks.length === 0 ? (
+                      <div className="text-xs text-stone-500 bg-stone-200/10 rounded-xl p-3 text-center border border-dashed border-stone-200/80 font-medium">
+                        내일 일정이 없습니다.
+                  </div>
+                    ) : (
+                      tomorrowTasks.map(({ video, phase }) => {
+                        const meta = PHASE_META[phase as Exclude<SchedulePhase, ''>];
+                        return (
+                          <div
+                            key={`m-tomorrow-${video.id}`}
+                            className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-3xs flex flex-col gap-1.5"
+                          >
+                            <div className="flex flex-wrap">
+                              <span className={`px-2 py-0.5 rounded-md text-[10.5px] font-black border leading-none shadow-3xs tracking-tight ${meta?.bg} ${meta?.color} ${meta?.border}`}>
+                                {meta?.emoji} {meta?.label}
+                              </span>
+                            </div>
+                            <div className="text-xs font-extrabold text-slate-800 leading-snug">
+                              {video.name}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 font-extrabold flex items-center justify-center text-xs border border-blue-500/20 shrink-0">
                     SL
