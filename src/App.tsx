@@ -34,6 +34,32 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'timeline' | 'table' | 'kanban' | 'calendar'>('timeline');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Admin Mode states
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return localStorage.getItem('is_admin_mode') === 'true';
+  });
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === 'worldvision' || passwordInput === 'admin2026' || passwordInput === '1234') {
+      setIsAdmin(true);
+      localStorage.setItem('is_admin_mode', 'true');
+      setIsAdminModalOpen(false);
+      setPasswordInput('');
+      setPasswordError('');
+    } else {
+      setPasswordError('비밀번호가 올바르지 않습니다.');
+    }
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdmin(false);
+    localStorage.removeItem('is_admin_mode');
+  };
+
   // Date and To Do configuration - computed based on Korea Standard Time (KST, UTC+9)
   const getTodayAndTomorrow = () => {
     const now = new Date();
@@ -280,6 +306,10 @@ export default function App() {
 
   // 7. Reset data back to default template
   const handleResetData = () => {
+    if (!isAdmin) {
+      setIsAdminModalOpen(true);
+      return;
+    }
     const confirmReset = window.confirm(
       '모든 편집 내용이 초기화되며 구글 시트 기본값 상태로 되돌아갑니다. 진행하시겠습니까?'
     );
@@ -301,6 +331,10 @@ export default function App() {
 
   // 9. Import schedule state from JSON file
   const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAdmin) {
+      setIsAdminModalOpen(true);
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -359,7 +393,7 @@ export default function App() {
               }`}
             >
               <CalendarRange className="w-4 h-4" />
-              <span>Timeline</span>
+              <span>Schedule</span>
             </button>
 
             <button
@@ -487,7 +521,7 @@ export default function App() {
               <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 font-extrabold flex items-center justify-center text-xs border border-blue-500/20 shrink-0">
                 SL
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-slate-800 text-xs font-bold truncate">sinhye_lee</p>
                 <p className="text-slate-500 text-[10px] font-semibold truncate">Video Editor</p>
               </div>
@@ -544,7 +578,7 @@ export default function App() {
                   }`}
                 >
                   <CalendarRange className="w-4 h-4" />
-                  <span>Timeline</span>
+                  <span>Schedule</span>
                 </button>
 
                 <button
@@ -679,7 +713,7 @@ export default function App() {
                   <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 font-extrabold flex items-center justify-center text-xs border border-blue-500/20 shrink-0">
                     SL
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-slate-800 text-xs font-bold truncate">sinhye_lee@worldvision.kr</p>
                     <p className="text-slate-500 text-[10px] mt-0.5 font-semibold">Video Editor</p>
                   </div>
@@ -720,34 +754,62 @@ export default function App() {
 
           {/* Action Tools */}
           <div className="flex items-center gap-2" id="campaign-toolbar">
-            <button
-              onClick={handleExportData}
-              className="px-2.5 py-1.5 sm:px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold transition-all shadow-2xs flex items-center gap-1.5"
-              title="백업 다운로드"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">백업 다운로드</span>
-            </button>
+            {!isAdmin && (
+              <div className="px-2.5 py-1.5 bg-stone-100 border border-stone-200 text-stone-500 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0">
+                <span>👁️ <span className="hidden sm:inline">읽기 전용</span><span className="sm:hidden">읽기전용</span></span>
+              </div>
+            )}
 
-            <label className="px-2.5 py-1.5 sm:px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-2xs flex items-center gap-1.5">
-              <Upload className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">백업 복원</span>
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleImportData}
-                className="hidden"
-              />
-            </label>
+            {isAdmin ? (
+              <button
+                onClick={handleAdminLogout}
+                className="px-2.5 py-1.5 sm:px-3.5 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5"
+                title="관리자 로그아웃"
+              >
+                <span>🔓 <span className="hidden md:inline">관리자 모드</span></span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsAdminModalOpen(true)}
+                className="px-2.5 py-1.5 sm:px-3.5 bg-stone-100 border border-stone-200 text-stone-700 hover:bg-stone-200 rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5"
+                title="관리자 로그인"
+              >
+                <span>🔒 <span className="hidden md:inline">관리자 로그인</span></span>
+              </button>
+            )}
 
-            <button
-              onClick={handleResetData}
-              className="px-2.5 py-1.5 sm:px-3.5 bg-rose-50 hover:bg-rose-100/70 border border-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition-all shadow-2xs flex items-center gap-1.5"
-              title="시트 기본값으로 초기화"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">데이터 초기화</span>
-            </button>
+            {isAdmin && (
+              <>
+                <button
+                  onClick={handleExportData}
+                  className="px-2.5 py-1.5 sm:px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold transition-all shadow-2xs flex items-center gap-1.5"
+                  title="백업 다운로드"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">백업 다운로드</span>
+                </button>
+
+                <label className="px-2.5 py-1.5 sm:px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold cursor-pointer transition-all shadow-2xs flex items-center gap-1.5">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">백업 복원</span>
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportData}
+                    className="hidden"
+                  />
+                </label>
+
+                <button
+                  onClick={handleResetData}
+                  className="px-2.5 py-1.5 sm:px-3.5 bg-rose-50 hover:bg-rose-100/70 border border-rose-100 text-rose-700 rounded-lg text-xs font-semibold transition-all shadow-2xs flex items-center gap-1.5"
+                  title="시트 기본값으로 초기화"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">데이터 초기화</span>
+                </button>
+              </>
+            )}
           </div>
         </header>
 
@@ -772,6 +834,7 @@ export default function App() {
                     videos={videos}
                     onUpdateSchedule={handleUpdateSchedule}
                     onUpdateScheduleRange={handleUpdateScheduleRange}
+                    isAdmin={isAdmin}
                   />
                 )}
 
@@ -781,6 +844,7 @@ export default function App() {
                     onAddVideo={handleAddVideo}
                     onDeleteVideo={handleDeleteVideo}
                     onUpdateVideoField={handleUpdateVideoField}
+                    isAdmin={isAdmin}
                   />
                 )}
 
@@ -788,6 +852,7 @@ export default function App() {
                   <KanbanBoard
                     videos={videos}
                     onUpdateVideoStatus={handleUpdateVideoStatus}
+                    isAdmin={isAdmin}
                   />
                 )}
 
@@ -800,6 +865,89 @@ export default function App() {
 
         </div>
       </main>
+
+      {/* Admin Password Modal */}
+      <AnimatePresence>
+        {isAdminModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50" id="admin-login-modal-overlay">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white rounded-2xl shadow-xl max-w-sm w-full border border-slate-200 overflow-hidden"
+              id="admin-login-modal-body"
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🔐</span>
+                    <h3 className="font-extrabold text-slate-800 text-base">관리자 권한 인증</h3>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsAdminModalOpen(false);
+                      setPasswordInput('');
+                      setPasswordError('');
+                    }}
+                    className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-all"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <p className="text-xs text-slate-500 font-medium mb-5 leading-relaxed">
+                  영상의 일정, 제목, 상태값 등을 수정하려면 관리자 로그인이 필요합니다.
+                </p>
+
+                <form onSubmit={handleAdminLogin} className="space-y-4">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                      비밀번호
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="비밀번호를 입력하세요"
+                      value={passwordInput}
+                      onChange={(e) => {
+                        setPasswordInput(e.target.value);
+                        if (passwordError) setPasswordError('');
+                      }}
+                      className="w-full text-xs px-3 py-2.5 rounded-lg border border-slate-200 bg-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-800 font-semibold"
+                      autoFocus
+                    />
+                    {passwordError && (
+                      <p className="text-[10px] text-rose-500 font-bold mt-1.5 flex items-center gap-1">
+                        ⚠️ {passwordError}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAdminModalOpen(false);
+                        setPasswordInput('');
+                        setPasswordError('');
+                      }}
+                      className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-all"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-all shadow-md shadow-indigo-500/15"
+                    >
+                      로그인
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

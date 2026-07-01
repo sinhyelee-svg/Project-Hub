@@ -8,12 +8,14 @@ interface GanttTimelineProps {
   videos: VideoItem[];
   onUpdateSchedule: (videoId: string, date: string, phase: SchedulePhase) => void;
   onUpdateScheduleRange: (videoId: string, startIdx: number, endIdx: number, phase: SchedulePhase, excludeRedDays?: boolean) => void;
+  isAdmin?: boolean;
 }
 
 export const GanttTimeline: React.FC<GanttTimelineProps> = ({
   videos,
   onUpdateSchedule,
   onUpdateScheduleRange,
+  isAdmin = false,
 }) => {
   // Paintbrush state
   const [selectedBrush, setSelectedBrush] = useState<SchedulePhase | 'clear'>('대기');
@@ -38,12 +40,14 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
 
   // Handle painting via dragging
   const handleMouseDown = (videoId: string, date: string) => {
+    if (!isAdmin) return;
     setIsPainting(true);
     const phaseValue = selectedBrush === 'clear' ? '' : selectedBrush;
     onUpdateSchedule(videoId, date, phaseValue);
   };
 
   const handleMouseEnter = (videoId: string, date: string) => {
+    if (!isAdmin) return;
     if (isPainting) {
       const phaseValue = selectedBrush === 'clear' ? '' : selectedBrush;
       onUpdateSchedule(videoId, date, phaseValue);
@@ -79,62 +83,70 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
             <Palette className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-800 text-sm">Timeline</h3>
+            <h3 className="font-semibold text-slate-800 text-sm">Schedule</h3>
           </div>
         </div>
 
-        {/* Brush Palette */}
-        <div className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-lg border border-slate-200 shadow-2xs">
-          {Object.entries(PHASE_META).map(([key, meta]) => {
-            const phase = key as SchedulePhase;
-            const isSelected = selectedBrush === phase;
-            return (
+        {isAdmin ? (
+          <>
+            {/* Brush Palette */}
+            <div className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-lg border border-slate-200 shadow-2xs">
+              {Object.entries(PHASE_META).map(([key, meta]) => {
+                const phase = key as SchedulePhase;
+                const isSelected = selectedBrush === phase;
+                return (
+                  <button
+                    key={phase}
+                    onClick={() => setSelectedBrush(phase)}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 border ${
+                      isSelected
+                        ? `${meta.bg} ${meta.border} text-slate-900 ring-2 ring-indigo-500/20`
+                        : 'border-transparent text-slate-600 hover:bg-slate-50'
+                    }`}
+                    title={`${phase} 브러시`}
+                  >
+                    <span>{meta.emoji}</span>
+                    <span>{phase}</span>
+                    {isSelected && <Check className="w-3 h-3 text-indigo-600 ml-0.5" />}
+                  </button>
+                );
+              })}
               <button
-                key={phase}
-                onClick={() => setSelectedBrush(phase)}
+                onClick={() => setSelectedBrush('clear')}
                 className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 border ${
-                  isSelected
-                    ? `${meta.bg} ${meta.border} text-slate-900 ring-2 ring-indigo-500/20`
+                  selectedBrush === 'clear'
+                    ? 'bg-rose-50 border-rose-200 text-rose-700 ring-2 ring-rose-500/20'
                     : 'border-transparent text-slate-600 hover:bg-slate-50'
                 }`}
-                title={`${phase} 브러시`}
+                title="일정 지우기"
               >
-                <span>{meta.emoji}</span>
-                <span>{phase}</span>
-                {isSelected && <Check className="w-3 h-3 text-indigo-600 ml-0.5" />}
+                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                <span>비우기</span>
+                {selectedBrush === 'clear' && <Check className="w-3 h-3 text-rose-600 ml-0.5" />}
               </button>
-            );
-          })}
-          <button
-            onClick={() => setSelectedBrush('clear')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 border ${
-              selectedBrush === 'clear'
-                ? 'bg-rose-50 border-rose-200 text-rose-700 ring-2 ring-rose-500/20'
-                : 'border-transparent text-slate-600 hover:bg-slate-50'
-            }`}
-            title="일정 지우기"
-          >
-            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-            <span>비우기</span>
-            {selectedBrush === 'clear' && <Check className="w-3 h-3 text-rose-600 ml-0.5" />}
-          </button>
-        </div>
+            </div>
 
-        {/* Bulk Fill Button */}
-        <div>
-          <button
-            onClick={() => setIsBulkOpen(!isBulkOpen)}
-            className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium transition-all shadow-2xs flex items-center gap-1.5"
-            id="bulk-fill-toggle-btn"
-          >
-            <CalendarRange className="w-4 h-4" />
-            <span>기간 일괄 지정</span>
-          </button>
-        </div>
+            {/* Bulk Fill Button */}
+            <div>
+              <button
+                onClick={() => setIsBulkOpen(!isBulkOpen)}
+                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium transition-all shadow-2xs flex items-center gap-1.5"
+                id="bulk-fill-toggle-btn"
+              >
+                <CalendarRange className="w-4 h-4" />
+                <span>기간 일괄 지정</span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 max-w-lg bg-stone-100 border border-stone-200 text-stone-600 text-[11px] px-3.5 py-1.5 rounded-lg font-bold flex items-center gap-2">
+            <span>🔒 읽기 전용 모드: 일정을 수정하려면 우측 상단이나 사이드바에서 관리자로 로그인하세요.</span>
+          </div>
+        )}
       </div>
 
       {/* Bulk Fill Drawer */}
-      {isBulkOpen && (
+      {isAdmin && isBulkOpen && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
@@ -240,7 +252,7 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
       {/* Scrollable Timeline Grid */}
       <div 
         ref={scrollContainerRef}
-        className="overflow-x-auto w-full relative border-slate-200 cursor-cell select-none"
+        className={`overflow-x-auto w-full relative border-slate-200 select-none ${isAdmin ? 'cursor-cell' : 'cursor-default'}`}
         id="timeline-scroll-container"
       >
         <table className="min-w-[3100px] w-full border-collapse border-spacing-0 table-fixed">

@@ -7,9 +7,10 @@ import { motion } from 'motion/react';
 interface KanbanBoardProps {
   videos: VideoItem[];
   onUpdateVideoStatus: (id: string, newStatus: VideoStatus) => void;
+  isAdmin?: boolean;
 }
 
-export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos, onUpdateVideoStatus }) => {
+export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos, onUpdateVideoStatus, isAdmin = false }) => {
   const columns: { status: VideoStatus; title: string; meta: any }[] = [
     { status: '대기', title: '🤍 대기', meta: STATUS_META['대기'] },
     { status: '가편 편집', title: '🎞️ 가편 편집', meta: STATUS_META['가편 편집'] },
@@ -141,27 +142,29 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos, onUpdateVideoS
                       </div>
 
                       {/* Card Actions (Move Buttons) */}
-                      <div className="flex justify-between items-center pt-2 border-t border-slate-100 mt-1">
-                        <button
-                          onClick={() => moveVideo(video, 'prev')}
-                          disabled={video.status === '대기'}
-                          className="p-1 text-slate-400 hover:text-indigo-600 disabled:opacity-20 disabled:hover:text-slate-400 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1"
-                          title="이전 단계로"
-                        >
-                          <ArrowLeft className="w-3.5 h-3.5" />
-                          <span className="text-[9px] font-bold">이전</span>
-                        </button>
+                      {isAdmin && (
+                        <div className="flex justify-between items-center pt-2 border-t border-slate-100 mt-1">
+                          <button
+                            onClick={() => moveVideo(video, 'prev')}
+                            disabled={video.status === '대기'}
+                            className="p-1 text-slate-400 hover:text-indigo-600 disabled:opacity-20 disabled:hover:text-slate-400 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1"
+                            title="이전 단계로"
+                          >
+                            <ArrowLeft className="w-3.5 h-3.5" />
+                            <span className="text-[9px] font-bold">이전</span>
+                          </button>
 
-                        <button
-                          onClick={() => moveVideo(video, 'next')}
-                          disabled={video.status === '완료'}
-                          className="p-1 text-slate-400 hover:text-indigo-600 disabled:opacity-20 disabled:hover:text-slate-400 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1"
-                          title="다음 단계로"
-                        >
-                          <span className="text-[9px] font-bold">다음</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                          <button
+                            onClick={() => moveVideo(video, 'next')}
+                            disabled={video.status === '완료'}
+                            className="p-1 text-slate-400 hover:text-indigo-600 disabled:opacity-20 disabled:hover:text-slate-400 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1"
+                            title="다음 단계로"
+                          >
+                            <span className="text-[9px] font-bold">다음</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
                     </motion.div>
                   );
                 })
