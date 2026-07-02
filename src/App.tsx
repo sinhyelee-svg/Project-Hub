@@ -279,7 +279,7 @@ export default function App() {
   };
 
   // 5. Add a new video to the campaign
-  const handleAddVideo = (name: string) => {
+  const handleAddVideo = (name: string, campaignName?: string) => {
     const maxNo = videos.reduce((max, v) => (v.no > max ? v.no : max), 0);
     const newVideo: VideoItem = {
       id: `video-${Date.now()}`,
@@ -289,6 +289,7 @@ export default function App() {
       progress: 0,
       remarks: '',
       schedule: {},
+      campaignName: campaignName || '',
     };
     saveVideoToFirestore(newVideo);
   };
@@ -740,15 +741,9 @@ export default function App() {
             </button>
 
             <div className="min-w-0">
-              <h1 className="text-sm sm:text-base font-bold text-slate-800 tracking-tight truncate flex items-center gap-1.5">
-                <span>캠페인 영상 제작 일정 대시보드</span>
-                <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-full font-display">
-                  구글 시트 연동형
-                </span>
+              <h1 className="text-sm sm:text-base font-bold text-slate-800 tracking-tight truncate">
+                캠페인 영상 제작 일정 대시보드
               </h1>
-              <p className="text-[10px] sm:text-xs text-slate-400 font-semibold truncate">
-                Synced with Google Sheets • Live Production Dashboard
-              </p>
             </div>
           </div>
 

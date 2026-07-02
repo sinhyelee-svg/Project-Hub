@@ -18,6 +18,7 @@ export interface VideoItem {
   progress: number;
   remarks: string;
   schedule: Record<string, SchedulePhase>; // key is "M/D" (e.g., "7/1", "8/15")
+  campaignName?: string;
 }
 
 export interface Campaign {

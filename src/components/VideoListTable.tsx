@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { VideoItem, VideoStatus } from '../types';
-import { STATUS_META } from '../data';
+import { STATUS_META, getCampaignColor } from '../data';
 import { Search, Plus, Trash2, Sliders, ChevronDown, Check, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -50,7 +50,7 @@ const EditableInput: React.FC<EditableInputProps> = ({
 
 interface VideoListTableProps {
   videos: VideoItem[];
-  onAddVideo: (name: string) => void;
+  onAddVideo: (name: string, campaignName?: string) => void;
   onDeleteVideo: (id: string) => void;
   onUpdateVideoField: <K extends keyof VideoItem>(id: string, field: K, value: VideoItem[K]) => void;
   isAdmin?: boolean;
@@ -66,13 +66,16 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<VideoStatus | 'all'>('all');
   const [newVideoName, setNewVideoName] = useState('');
+  const [newCampaignName, setNewCampaignName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
   // Active edit state for dropdowns
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
 
   const filteredVideos = videos.filter((video) => {
-    const matchesSearch = video.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = 
+      video.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (video.campaignName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || video.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -80,8 +83,9 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
   const handleAddVideoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newVideoName.trim()) return;
-    onAddVideo(newVideoName.trim());
+    onAddVideo(newVideoName.trim(), newCampaignName.trim());
     setNewVideoName('');
+    setNewCampaignName('');
     setIsAdding(false);
   };
 
@@ -144,30 +148,45 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
             className="border-b border-slate-200 bg-slate-50/70 overflow-hidden"
             id="add-video-panel"
           >
-            <form onSubmit={handleAddVideoSubmit} className="p-4 flex gap-2 max-w-lg">
-              <input
-                type="text"
-                placeholder="추가할 영상 제목 입력..."
-                value={newVideoName}
-                onChange={(e) => setNewVideoName(e.target.value)}
-                className="flex-1 text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-700 font-medium"
-                autoFocus
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-all"
-                id="submit-add-video-btn"
-              >
-                추가
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsAdding(false)}
-                className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-medium transition-all"
-                id="cancel-add-video-btn"
-              >
-                취소
-              </button>
+            <form onSubmit={handleAddVideoSubmit} className="p-4 flex flex-col sm:flex-row gap-3 max-w-2xl items-stretch sm:items-end">
+              <div className="flex-1 flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">캠페인명</label>
+                <input
+                  type="text"
+                  placeholder="예: 릴스, 위드베어 (생략가능)"
+                  value={newCampaignName}
+                  onChange={(e) => setNewCampaignName(e.target.value)}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-700 font-medium"
+                />
+              </div>
+              <div className="flex-[2] flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">영상 제목</label>
+                <input
+                  type="text"
+                  placeholder="추가할 영상 제목 입력..."
+                  value={newVideoName}
+                  onChange={(e) => setNewVideoName(e.target.value)}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-700 font-medium"
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-all h-9 flex items-center justify-center"
+                  id="submit-add-video-btn"
+                >
+                  추가
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAdding(false)}
+                  className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-medium transition-all h-9 flex items-center justify-center"
+                  id="cancel-add-video-btn"
+                >
+                  취소
+                </button>
+              </div>
             </form>
           </motion.div>
         )}
@@ -175,39 +194,67 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
 
       {/* Table Content */}
       <div className="overflow-x-auto min-h-[380px] pb-40" id="video-table-scroller">
-        <table className="min-w-[950px] w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/70 border-b border-slate-200 text-slate-500 text-xs font-bold font-display">
-              <th className="py-3 px-4 w-12 text-center">No</th>
-              <th className="py-3 px-4 min-w-[220px]">영상명</th>
-              <th className="py-3 px-4 w-[160px]">상태</th>
-              <th className="py-3 px-4 min-w-[200px]">진행률</th>
-              <th className="py-3 px-4 min-w-[220px]">비고</th>
-              {isAdmin && <th className="py-3 px-4 w-16 text-center">삭제</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {filteredVideos.length === 0 ? (
-              <tr>
-                <td colSpan={isAdmin ? 6 : 5} className="py-8 text-center text-xs text-slate-400 font-medium">
-                  검색 결과에 맞는 영상이 없습니다.
-                </td>
-              </tr>
-            ) : (
-              filteredVideos.map((video, idx) => {
-                const meta = STATUS_META[video.status] || STATUS_META['대기'];
-                const isOpen = activeDropdownId === video.id;
+        {(() => {
+          const campaignWidth = 150;
 
-                return (
-                  <tr
-                    key={video.id}
-                    className="border-b border-slate-100 hover:bg-slate-50/40 text-slate-700 text-xs transition-colors"
-                    id={`video-row-${video.id}`}
-                  >
-                    {/* No */}
-                    <td className="py-3.5 px-4 text-center font-semibold text-slate-400">
-                      {video.no}
+          return (
+            <table className="w-full text-left border-collapse" style={{ minWidth: 910 + campaignWidth }}>
+              <thead>
+                <tr className="bg-slate-50/70 border-b border-slate-200 text-slate-500 text-xs font-bold font-display">
+                  <th className="py-3 px-4 w-12 text-center">No</th>
+                  <th className="py-3 px-4" style={{ width: campaignWidth, minWidth: campaignWidth }}>캠페인명</th>
+                  <th className="py-3 px-4 min-w-[220px]">영상명</th>
+                  <th className="py-3 px-4 w-[160px]">상태</th>
+                  <th className="py-3 px-4 min-w-[200px]">진행률</th>
+                  <th className="py-3 px-4 min-w-[220px]">비고</th>
+                  {isAdmin && <th className="py-3 px-4 w-16 text-center">삭제</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredVideos.length === 0 ? (
+                  <tr>
+                    <td colSpan={isAdmin ? 7 : 6} className="py-8 text-center text-xs text-slate-400 font-medium">
+                      검색 결과에 맞는 영상이 없습니다.
                     </td>
+                  </tr>
+                ) : (
+                  filteredVideos.map((video, idx) => {
+                    const meta = STATUS_META[video.status] || STATUS_META['대기'];
+                    const isOpen = activeDropdownId === video.id;
+                    const campaignTheme = video.campaignName ? getCampaignColor(video.campaignName) : null;
+
+                    return (
+                      <tr
+                        key={video.id}
+                        className={`border-b border-slate-100 text-slate-700 text-xs transition-colors ${campaignTheme ? `${campaignTheme.bg} hover:opacity-95` : 'hover:bg-slate-50/40'}`}
+                        id={`video-row-${video.id}`}
+                      >
+                        {/* No */}
+                        <td className="py-3.5 px-4 text-center font-semibold text-slate-400">
+                          {video.no}
+                        </td>
+
+                        {/* Campaign Name */}
+                        <td className="py-3.5 px-4 font-semibold text-slate-800" style={{ width: campaignWidth, minWidth: campaignWidth }}>
+                          {isAdmin ? (
+                            <div className="flex items-center gap-1">
+                              <EditableInput
+                                value={video.campaignName || ''}
+                                onSave={(val) => onUpdateVideoField(video.id, 'campaignName', val)}
+                                placeholder="캠페인명"
+                                className="w-full text-xs bg-white/50 hover:bg-white/80 focus:bg-white px-2 py-1 rounded-md border border-slate-200/60 focus:outline-hidden text-slate-700 font-bold"
+                              />
+                            </div>
+                          ) : (
+                            video.campaignName ? (
+                              <span className="font-bold text-slate-800 leading-tight block whitespace-normal break-all text-xs">
+                                {video.campaignName}
+                              </span>
+                            ) : (
+                              <span className="text-slate-300">-</span>
+                            )
+                          )}
+                        </td>
 
                     {/* Video Name */}
                     <td className="py-3.5 px-4 font-semibold text-slate-800">
@@ -218,7 +265,7 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
                           className="w-full bg-transparent hover:bg-slate-100/50 focus:bg-white px-1.5 py-1 rounded-md border border-transparent focus:border-slate-300 focus:outline-hidden transition-all text-slate-800 font-semibold"
                         />
                       ) : (
-                        <span className="px-1.5 py-1 text-slate-800 font-semibold block">{video.name}</span>
+                        <span className="text-slate-800 font-semibold">{video.name}</span>
                       )}
                     </td>
 
@@ -351,6 +398,8 @@ export const VideoListTable: React.FC<VideoListTableProps> = ({
             )}
           </tbody>
         </table>
+          );
+        })()}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React from 'react';
 import { VideoItem, VideoStatus } from '../types';
-import { STATUS_META, PHASE_META, isRedDay } from '../data';
+import { STATUS_META, PHASE_META, isRedDay, getCampaignColor } from '../data';
 import { ArrowLeft, ArrowRight, Video, FileText, BarChart } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -53,8 +53,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos, onUpdateVideoS
     return Object.entries(video.schedule).filter(([date, phase]) => phase !== '' && !isRedDay(date)).length;
   };
 
+  const maxCampaignLen = Math.max(...videos.map((v) => v.campaignName?.length || 0), 4);
+  const kanbanColWidth = Math.max(260, Math.min(320, maxCampaignLen * 11 + 60));
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-8 gap-3" id="kanban-grid-container">
+    <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-200" id="kanban-grid-container">
       {columns.map((col) => {
         const colVideos = videos.filter((v) => v.status === col.status);
 
@@ -62,6 +65,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos, onUpdateVideoS
           <div
             key={col.status}
             className="bg-slate-50/50 rounded-xl p-3 border border-slate-200/70 flex flex-col min-h-[450px]"
+            style={{ minWidth: kanbanColWidth, width: kanbanColWidth }}
             id={`kanban-col-${col.status}`}
           >
             {/* Column Header */}
@@ -87,23 +91,33 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ videos, onUpdateVideoS
               ) : (
                 colVideos.map((video) => {
                   const scheduledDays = getScheduledDaysCount(video);
-                  
+                  const campaignTheme = video.campaignName ? getCampaignColor(video.campaignName) : null;
+
                   return (
                     <motion.div
                       layout
                       key={video.id}
-                      className="bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-xs rounded-xl p-3.5 transition-all flex flex-col gap-2.5 relative group"
+                      className={`border border-slate-200 hover:border-indigo-400 hover:shadow-xs rounded-xl p-3.5 transition-all flex flex-col gap-2.5 relative group ${
+                        campaignTheme ? `${campaignTheme.bg}` : 'bg-white'
+                      }`}
                       id={`kanban-card-${video.id}`}
                     >
                       {/* Video Title */}
                       <div className="flex items-start justify-between gap-1">
-                        <div className="flex items-start gap-1.5">
-                          <span className="text-[10px] font-bold text-slate-400 mt-0.5 tabular-nums">
+                        <div className="flex items-start gap-1.5 min-w-0">
+                          <span className="text-[10px] font-bold text-slate-400 mt-0.5 tabular-nums shrink-0">
                             #{video.no}
                           </span>
-                          <span className="text-xs font-bold text-slate-800 leading-tight">
-                            {video.name}
-                          </span>
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            {video.campaignName && (
+                              <span className="font-extrabold text-slate-800 leading-none mb-0.5 text-xs">
+                                {video.campaignName}
+                              </span>
+                            )}
+                            <span className="text-xs font-bold text-slate-800 leading-tight block">
+                              {video.name}
+                            </span>
+                          </div>
                         </div>
                       </div>
 

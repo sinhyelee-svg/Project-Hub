@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { VideoItem, SchedulePhase } from '../types';
-import { PHASE_META } from '../data';
+import { PHASE_META, getCampaignColor } from '../data';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -171,7 +171,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
                         className={`text-[9px] px-1 py-0.5 rounded border leading-tight flex items-center justify-between gap-1 truncate ${meta?.bg || 'bg-slate-50'} ${meta?.border || 'border-slate-200'} ${meta?.color || 'text-slate-700'}`}
                         title={`${video.name}: ${phase}`}
                       >
-                        <span className="truncate flex-1 font-bold">{video.name}</span>
+                        <span className="truncate flex-1 font-bold">
+                          {video.name}
+                        </span>
                         <span className="shrink-0 text-[10px]">{meta?.emoji}</span>
                       </div>
                     );
@@ -200,17 +202,27 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ videos }) => {
           ) : (
             selectedSchedules.map(({ video, phase }) => {
               const meta = PHASE_META[phase as Exclude<SchedulePhase, ''>];
+              const campaignTheme = video.campaignName ? getCampaignColor(video.campaignName) : null;
               return (
                 <div
                   key={video.id}
-                  className="p-3 border border-slate-200/70 rounded-xl hover:border-slate-300 transition-all bg-slate-50/40 flex items-center justify-between gap-3"
+                  className={`p-3 border rounded-xl hover:border-slate-300 transition-all flex items-center justify-between gap-3 ${
+                    campaignTheme 
+                      ? `${campaignTheme.bg} border-slate-200/50` 
+                      : 'border-slate-200/70 bg-slate-50/40'
+                  }`}
                   id={`selected-schedule-${video.id}`}
                 >
                   <div className="flex flex-col gap-1 min-w-0">
                     <span className="text-[10px] font-bold text-slate-400 tabular-nums">#{video.no}</span>
-                    <span className="text-xs font-bold text-slate-800 truncate" title={video.name}>
-                      {video.name}
-                    </span>
+                    <div className="text-xs font-bold text-slate-800 flex flex-col items-start gap-1 min-w-0">
+                      {video.campaignName && (
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-extrabold border ${campaignTheme?.badge} leading-none`}>
+                          {video.campaignName}
+                        </span>
+                      )}
+                      <span className="truncate block" title={video.name}>{video.name}</span>
+                    </div>
                   </div>
 
                   <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 shrink-0 ${meta?.bg} ${meta?.border} ${meta?.color}`}>
