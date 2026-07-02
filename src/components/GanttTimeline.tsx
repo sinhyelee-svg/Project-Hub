@@ -261,16 +261,16 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
         className={`overflow-x-auto w-full relative border-slate-200 select-none ${isAdmin ? 'cursor-cell' : 'cursor-default'}`}
         id="timeline-scroll-container"
       >
-        <table className="w-full border-collapse border-spacing-0 table-fixed" style={{ minWidth: 3140 + (campaignWidth - 110) }}>
+        <table className="w-full border-separate border-spacing-0 table-fixed" style={{ minWidth: 3140 + (campaignWidth - 110) }}>
           {/* Header Row 1: Month blocks */}
           <thead>
             <tr className="border-b border-slate-200 text-slate-400">
               {/* Sticky columns spacing placeholders */}
-              <th className="sticky left-0 bg-slate-50 z-30 p-0 m-0 border-r border-slate-200" style={{ width: col0Width, minWidth: col0Width }}></th>
-              <th className="sticky bg-slate-50 z-30 p-0 m-0 border-r border-slate-200" style={{ left: col1Left, width: campaignWidth, minWidth: campaignWidth }}></th>
-              <th className="sticky bg-slate-50 z-30 p-0 m-0 border-r border-slate-200" style={{ left: col2Left, width: 180, minWidth: 180 }}></th>
-              <th className="sticky bg-slate-50 z-30 p-0 m-0 border-r border-slate-200" style={{ left: col3Left, width: 80, minWidth: 80 }}></th>
-              <th className="sticky bg-slate-50 z-30 p-0 m-0 border-r border-slate-200" style={{ left: col4Left, width: 60, minWidth: 60 }}></th>
+              <th className="sticky left-0 bg-slate-50 z-50 p-0 m-0 border-r border-slate-200" style={{ width: col0Width, minWidth: col0Width }}></th>
+              <th className="sticky bg-slate-50 z-50 p-0 m-0 border-r border-slate-200" style={{ left: col1Left, width: campaignWidth, minWidth: campaignWidth }}></th>
+              <th className="sticky bg-slate-50 z-50 p-0 m-0 border-r border-slate-200" style={{ left: col2Left, width: 180, minWidth: 180 }}></th>
+              <th className="sticky bg-slate-50 z-50 p-0 m-0 border-r border-slate-200" style={{ left: col3Left, width: 80, minWidth: 80 }}></th>
+              <th className="sticky bg-slate-50 z-50 p-0 m-0 border-r border-slate-200" style={{ left: col4Left, width: 60, minWidth: 60 }}></th>
               
               {/* Month Spans: 7/1 to 7/31 (31 cols), 8/1 to 8/31 (31 cols), 9/1 to 9/30 (30 cols) */}
               <th colSpan={31} className="bg-indigo-50/70 text-indigo-900 font-bold text-xs py-1.5 text-center tracking-wider border-r border-slate-200 font-display">
@@ -286,19 +286,19 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
 
             {/* Header Row 2: Days */}
             <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
-              <th className="sticky left-0 bg-slate-100 z-30 text-center text-xs font-bold py-2 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0]" style={{ width: col0Width, minWidth: col0Width }}>
+              <th className="sticky left-0 bg-slate-100 z-50 text-center text-xs font-bold py-2 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0]" style={{ width: col0Width, minWidth: col0Width }}>
                 No
               </th>
-              <th className="sticky bg-slate-100 z-30 text-left text-xs font-bold px-3 py-2 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] truncate" style={{ left: col1Left, width: campaignWidth, minWidth: campaignWidth }}>
+              <th className="sticky bg-slate-100 z-50 text-left text-xs font-bold px-3 py-2 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] truncate" style={{ left: col1Left, width: campaignWidth, minWidth: campaignWidth }}>
                 캠페인명
               </th>
-              <th className="sticky bg-slate-100 z-30 text-left text-xs font-bold px-3 py-2 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] truncate" style={{ left: col2Left, width: 180, minWidth: 180 }}>
+              <th className="sticky bg-slate-100 z-50 text-left text-xs font-bold px-3 py-2 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] truncate" style={{ left: col2Left, width: 180, minWidth: 180 }}>
                 영상명
               </th>
-              <th className="sticky bg-slate-100 z-30 text-center text-xs font-bold py-2 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0]" style={{ left: col3Left, width: 80, minWidth: 80 }}>
+              <th className="sticky bg-slate-100 z-50 text-center text-xs font-bold py-2 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0]" style={{ left: col3Left, width: 80, minWidth: 80 }}>
                 상태
               </th>
-              <th className="sticky bg-slate-100 z-30 text-center text-xs font-bold py-2 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0]" style={{ left: col4Left, width: 60, minWidth: 60 }}>
+              <th className="sticky bg-slate-100 z-50 text-center text-xs font-bold py-2 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0]" style={{ left: col4Left, width: 60, minWidth: 60 }}>
                 진행률
               </th>
 
@@ -363,40 +363,61 @@ export const GanttTimeline: React.FC<GanttTimelineProps> = ({
               return (
                 <tr 
                   key={video.id} 
-                  className={`border-b border-slate-100 h-10 transition-colors ${campaignTheme ? `${campaignTheme.bg} hover:opacity-95` : 'hover:bg-slate-50/50'}`}
+                  className="border-b border-slate-100 h-10 transition-colors hover:bg-slate-50/60"
                   id={`timeline-row-${video.id}`}
                 >
                   {/* No */}
-                  <td className={`sticky left-0 z-20 text-center text-xs text-slate-500 font-medium py-1.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] ${campaignTheme ? campaignTheme.bg : 'bg-white'}`} style={{ width: col0Width, minWidth: col0Width }}>
-                    {video.no}
+                  <td className="sticky left-0 z-40 text-center text-xs text-slate-500 font-medium py-1.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] bg-white relative" style={{ width: col0Width, minWidth: col0Width }}>
+                    {campaignTheme && (
+                      <div className={`absolute inset-0 ${campaignTheme.bg} pointer-events-none`} />
+                    )}
+                    <span className="relative z-10">{video.no}</span>
                   </td>
 
                   {/* Campaign Name */}
-                  <td className={`sticky z-20 text-xs font-semibold px-3 py-1.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] whitespace-normal break-all leading-tight ${campaignTheme ? campaignTheme.bg : 'bg-white'}`} style={{ left: col1Left, width: campaignWidth, minWidth: campaignWidth }} title={video.campaignName}>
-                    {video.campaignName ? (
-                      <span className="text-slate-800">
-                        {video.campaignName}
-                      </span>
-                    ) : (
-                      <span className="text-slate-300">-</span>
+                  <td className="sticky z-40 text-xs font-semibold px-3 py-1.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] whitespace-normal break-all leading-tight bg-white relative" style={{ left: col1Left, width: campaignWidth, minWidth: campaignWidth }} title={video.campaignName}>
+                    {campaignTheme && (
+                      <div className={`absolute inset-0 ${campaignTheme.bg} pointer-events-none`} />
                     )}
+                    <div className="relative z-10 w-full">
+                      {video.campaignName ? (
+                        <span className="text-slate-800">
+                          {video.campaignName}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">-</span>
+                      )}
+                    </div>
                   </td>
 
                   {/* Video Name */}
-                  <td className={`sticky z-20 text-xs text-slate-800 font-semibold px-3 py-1.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] truncate ${campaignTheme ? campaignTheme.bg : 'bg-white'}`} style={{ left: col2Left, width: 180, minWidth: 180 }} title={video.name}>
-                    {video.name}
+                  <td className="sticky z-40 text-xs text-slate-800 font-semibold px-3 py-1.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] truncate bg-white relative" style={{ left: col2Left, width: 180, minWidth: 180 }} title={video.name}>
+                    {campaignTheme && (
+                      <div className={`absolute inset-0 ${campaignTheme.bg} pointer-events-none`} />
+                    )}
+                    <div className="relative z-10 truncate w-full">
+                      {video.name}
+                    </div>
                   </td>
 
                   {/* Status */}
-                  <td className={`sticky z-20 text-center py-1.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] ${campaignTheme ? campaignTheme.bg : 'bg-white'}`} style={{ left: col3Left, width: 80, minWidth: 80 }}>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${STATUS_META[video.status]?.bg} ${STATUS_META[video.status]?.color} ${STATUS_META[video.status]?.border}`}>
+                  <td className="sticky z-40 text-center py-1.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] bg-white relative" style={{ left: col3Left, width: 80, minWidth: 80 }}>
+                    {campaignTheme && (
+                      <div className={`absolute inset-0 ${campaignTheme.bg} pointer-events-none`} />
+                    )}
+                    <span className={`relative z-10 px-1.5 py-0.5 rounded text-[10px] font-bold border ${STATUS_META[video.status]?.bg} ${STATUS_META[video.status]?.color} ${STATUS_META[video.status]?.border}`}>
                       {video.status}
                     </span>
                   </td>
 
                   {/* Progress */}
-                  <td className={`sticky z-20 text-center text-xs text-slate-600 font-bold py-1.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] ${campaignTheme ? campaignTheme.bg : 'bg-white'}`} style={{ left: col4Left, width: 60, minWidth: 60 }}>
-                    {video.progress}%
+                  <td className="sticky z-40 text-center text-xs text-slate-600 font-bold py-1.5 border-r border-slate-200 shadow-[1px_0_0_0_#e2e8f0] bg-white relative" style={{ left: col4Left, width: 60, minWidth: 60 }}>
+                    {campaignTheme && (
+                      <div className={`absolute inset-0 ${campaignTheme.bg} pointer-events-none`} />
+                    )}
+                    <span className="relative z-10">
+                      {video.progress}%
+                    </span>
                   </td>
 
                 {/* Days of July, August & September */}
